@@ -1,5 +1,6 @@
 import argparse
 import json
+import math
 import os
 import re
 import time
@@ -154,6 +155,88 @@ class DialogueObserver:
 
     def on_tree_update(self, snapshot: TreeSnapshot, node: "Node") -> None:  # pragma: no cover
         pass
+
+
+class AdaptationMonitor:
+    """Tracks controller confidence and produces a smooth degradation coefficient."""
+
+    EVENT_WEIGHTS = {
+        "controller_failure": 0.4,
+        "plan_failure": 0.3,
+        "final_retry": 0.2,
+        "operation_simplified": 0.15,
+    }
+
+    def __init__(self, *, decay_factor: float = 0.35, recovery_rate: float = 0.08, min_confidence: float = 0.05):
+        self.confidence = 1.0
+        self.decay_factor = max(0.0, min(1.0, decay_factor))
+        self.recovery_rate = max(0.0, min(1.0, recovery_rate))
+        self.min_confidence = max(0.0, min(0.5, min_confidence))
+        self._round_penalty = 0.0
+
+    def start_round(self) -> None:
+        self._round_penalty = 0.0
+
+    def record_event(self, name: str, weight: Optional[float] = None) -> None:
+        event_weight = weight if weight is not None else self.EVENT_WEIGHTS.get(name, 0.1)
+        if event_weight <= 0:
+            return
+        self._round_penalty = min(1.5, self._round_penalty + event_weight)
+
+    def finish_round(self) -> None:
+        penalty = self._round_penalty
+        if penalty > 0:
+            drop = penalty * self.decay_factor
+            self.confidence = max(self.min_confidence, self.confidence - drop)
+        else:
+            recovery = self.recovery_rate * (1.0 - self.confidence)
+            self.confidence = min(1.0, self.confidence + recovery)
+        self._round_penalty = 0.0
+
+    @property
+    def alpha(self) -> float:
+        scaled = (self.confidence - 0.5) * 4.0
+        return 1.0 / (1.0 + math.exp(-scaled))
+
+
+class SlidingMemory:
+    """Lightweight sliding window memory used when BranchMind confidence drops."""
+
+    def __init__(self, *, window_turns: int = 4, summary_tail: int = 3):
+        self.window_turns = max(1, window_turns)
+        self.summary_tail = max(0, summary_tail)
+        self.system_prompt = (
+            "你是一个勤勉助手，主要依赖最近的对话窗口和摘要完成任务。"
+            "在信息不足时，保持行动建议具体、简洁。"
+        )
+        self.dialogue: List[Dict[str, str]] = []
+        self.summaries: List[str] = []
+
+    def record(self, query: str, response: str, summary: str) -> None:
+        if query:
+            self.dialogue.append({"role": "user", "content": query})
+        if response:
+            self.dialogue.append({"role": "assistant", "content": response})
+        cleaned_summary = (summary or "").strip()
+        if cleaned_summary:
+            self.summaries.append(cleaned_summary)
+        max_messages = max(10, self.window_turns * 6)
+        if len(self.dialogue) > max_messages:
+            self.dialogue = self.dialogue[-max_messages:]
+        if len(self.summaries) > 12:
+            self.summaries = self.summaries[-12:]
+
+    def build_prompt(self) -> List[Dict[str, str]]:
+        if not self.dialogue:
+            return []
+        window_messages = self.dialogue[-(self.window_turns * 2) :]
+        messages: List[Dict[str, str]] = [{"role": "system", "content": self.system_prompt}]
+        if self.summary_tail and self.summaries:
+            tail = " | ".join(self.summaries[-self.summary_tail :])
+            if tail:
+                messages.append({"role": "system", "content": f"[滑窗摘要] {tail}"})
+        messages.extend(window_messages)
+        return messages
 
 
 # --- 2. Tree primitives ----------------------------------------------------------------
@@ -935,6 +1018,8 @@ class DialogueManager:
         self.retry_delay = max(0.0, config.retry_delay)
         self.tree = self._load_state() or ContextTree()
         self.observer = observer
+        self.adaptation = AdaptationMonitor()
+        self.sliding_memory = SlidingMemory()
         self._pending_operation: Optional[TreeDecision] = None
         print("对话管理器已启动。根节点已创建。")
         if self.config.state_path:
@@ -1112,6 +1197,122 @@ class DialogueManager:
             f"{checklist}。请完善主体内容，并保证回答末尾提供结构化的 FinalChecklist JSON。"
         )
 
+    @staticmethod
+    def _clone_plan(plan: PlannedOperation, **overrides: Any) -> PlannedOperation:
+        payload = {
+            "operation": plan.operation,
+            "parent_id": plan.parent_id,
+            "context_branch_ids": list(plan.context_branch_ids),
+            "archive_targets": list(plan.archive_targets),
+            "metadata": dict(plan.metadata),
+        }
+        payload.update(overrides)
+        return PlannedOperation(**payload)
+
+    def _resolve_branch_for_append(self, *candidates: Optional[str]) -> str:
+        for candidate in candidates:
+            if candidate and candidate in self.tree.nodes and candidate != "root":
+                return candidate
+        latest = self.tree.get_latest_active_leaf()
+        if latest and latest in self.tree.nodes:
+            return latest
+        return "root"
+
+    def _adapt_plan(self, decision: TreeDecision, plan: PlannedOperation, alpha: float) -> PlannedOperation:
+        adjusted = self._clone_plan(plan)
+        simplified = False
+        if decision.operation == TreeOperationType.MERGE and alpha < 0.55:
+            target = self._resolve_branch_for_append(decision.primary_branch, adjusted.parent_id)
+            if target == "root":
+                adjusted = self._clone_plan(
+                    adjusted,
+                    operation=TreeOperationType.NEW_BRANCH,
+                    parent_id="root",
+                    context_branch_ids=["root"],
+                    archive_targets=[],
+                )
+            else:
+                adjusted = self._clone_plan(
+                    adjusted,
+                    operation=TreeOperationType.APPEND,
+                    parent_id=target,
+                    context_branch_ids=[target],
+                    archive_targets=[],
+                )
+            adjusted.metadata.setdefault("degraded_from", "merge")
+            adjusted.metadata["degraded_to"] = adjusted.operation.value
+            simplified = True
+        elif decision.operation == TreeOperationType.SPLIT and alpha < 0.5:
+            target = self._resolve_branch_for_append(decision.primary_branch, adjusted.parent_id)
+            if target == "root":
+                adjusted = self._clone_plan(
+                    adjusted,
+                    operation=TreeOperationType.NEW_BRANCH,
+                    parent_id="root",
+                    context_branch_ids=["root"],
+                    archive_targets=[],
+                )
+            else:
+                adjusted = self._clone_plan(
+                    adjusted,
+                    operation=TreeOperationType.APPEND,
+                    parent_id=target,
+                    context_branch_ids=[target],
+                    archive_targets=[],
+                )
+            adjusted.metadata.setdefault("degraded_from", "split")
+            adjusted.metadata["degraded_to"] = adjusted.operation.value
+            simplified = True
+        elif decision.operation == TreeOperationType.ARCHIVE and alpha < 0.4 and adjusted.archive_targets:
+            adjusted = self._clone_plan(
+                adjusted,
+                archive_targets=[],
+            )
+            adjusted.metadata.setdefault("degraded_from", "archive")
+            adjusted.metadata["degraded_to"] = "skip"
+            simplified = True
+
+        if simplified:
+            self.adaptation.record_event("operation_simplified")
+
+        context_ids = list(dict.fromkeys(adjusted.context_branch_ids))
+        if not context_ids:
+            context_ids = ["root"]
+        max_keep = max(1, int(round(max(alpha, 0.05) * len(context_ids))))
+        trimmed = context_ids[:max_keep]
+        if "root" not in trimmed:
+            trimmed.insert(0, "root")
+        adjusted.context_branch_ids = trimmed
+        return adjusted
+
+    @staticmethod
+    def _blend_contexts(
+        tree_context: List[Dict[str, str]], window_context: List[Dict[str, str]], alpha: float
+    ) -> List[Dict[str, str]]:
+        if not window_context:
+            return tree_context
+        if alpha <= 0.05:
+            return window_context
+        if alpha >= 0.95:
+            return tree_context
+
+        blended: List[Dict[str, str]] = []
+        keep_count = int(round(alpha * len(tree_context)))
+        if tree_context:
+            keep_count = max(1, keep_count)
+        blended.extend(tree_context[:keep_count])
+
+        seen = {(msg["role"], msg["content"]) for msg in blended}
+        for index, message in enumerate(window_context):
+            if message["role"] == "system" and index == 0 and alpha > 0.4:
+                continue
+            key = (message["role"], message["content"])
+            if key in seen:
+                continue
+            blended.append(message)
+            seen.add(key)
+        return blended
+
     def llm_cm_decide(self, query: str) -> TreeDecision:
         active_branches = self.tree.get_active_branches()
         branch_full_paths = {
@@ -1186,6 +1387,7 @@ class DialogueManager:
             return decision
         except Exception as exc:
             print(f"⚠️ 控制模型决策失败，将使用回退策略：{exc}")
+            self.adaptation.record_event("controller_failure")
             return self._default_decision()
 
     def llm_task_execute(self, query: str, context: List[Dict[str, str]]) -> str:
@@ -1214,81 +1416,96 @@ class DialogueManager:
         print("\n" + "=" * 60)
         print(f"接收到新请求: {query}")
 
-        decision = self.llm_cm_decide(query)
-        print(f"🧠 LLM-CM 决策: {decision}")
+        self.adaptation.start_round()
+        alpha = self.adaptation.alpha
+        print(f"🧭 控制置信度: {self.adaptation.confidence:.2f}，自适应系数 α={alpha:.2f}")
 
-        if decision.operation in (TreeOperationType.MERGE, TreeOperationType.SPLIT):
-            self._pending_operation = decision
-        else:
-            self._pending_operation = None
-
+        response: str = ""
         try:
-            plan = self.tree.plan_operation(decision)
-        except ValueError as exc:
-            print(f"⚠️ 规划失败，将退回默认策略：{exc}")
-            fallback_decision = self._default_decision()
-            plan = self.tree.plan_operation(fallback_decision)
-            decision = fallback_decision
+            decision = self.llm_cm_decide(query)
+            print(f"🧠 LLM-CM 决策: {decision}")
+
+            if decision.operation in (TreeOperationType.MERGE, TreeOperationType.SPLIT):
+                self._pending_operation = decision
+            else:
+                self._pending_operation = None
+
+            try:
+                plan = self.tree.plan_operation(decision)
+            except ValueError as exc:
+                print(f"⚠️ 规划失败，将退回默认策略：{exc}")
+                self.adaptation.record_event("plan_failure")
+                fallback_decision = self._default_decision()
+                plan = self.tree.plan_operation(fallback_decision)
+                decision = fallback_decision
+                self._pending_operation = None
+
+            plan = self._adapt_plan(decision, plan, alpha)
+            print(f"   └─ 规划结果：operation={plan.operation.value}, parent=...{plan.parent_id[-6:]}")
+
+            if self.observer:
+                self.observer.on_decision(decision, plan)
+
+            base_context_messages = self.tree.get_context_bundle(plan.context_branch_ids)
+            window_context_messages = self.sliding_memory.build_prompt()
+            blended_context = self._blend_contexts(base_context_messages, window_context_messages, alpha)
+            print(f"📚 聚合上下文分支数量: {len(plan.context_branch_ids)}，滑窗补充={len(window_context_messages)}")
+
+            requires_final = self._requires_final_synthesis(query, decision)
+            guardrail_prompt: Optional[str] = None
+            snapshot_messages: List[Dict[str, str]] = []
+            if requires_final:
+                snapshot_messages = self.tree.get_snapshot_messages()
+                guardrail_prompt = self._final_synthesis_guardrail()
+                context_messages = [{"role": "system", "content": guardrail_prompt}]
+                context_messages.extend(snapshot_messages)
+                context_messages.extend(blended_context)
+            else:
+                context_messages = blended_context
+
+            print("🚀 正在调用 LLM-Task 生成回复...")
+            response = self.llm_task_execute(query, context_messages)
+
+            if requires_final:
+                missing = self._evaluate_final_response(response)
+                if missing:
+                    self.adaptation.record_event("final_retry")
+                    print(f"⚠️ 终局检查缺项：{', '.join(missing)}，将触发补充生成。")
+                    retry_prompt = self._final_synthesis_retry_prompt(missing)
+                    retry_context = [{"role": "system", "content": retry_prompt}]
+                    if guardrail_prompt:
+                        retry_context.append({"role": "system", "content": guardrail_prompt})
+                    retry_context.extend(snapshot_messages)
+                    retry_context.extend(blended_context)
+                    response = self.llm_task_execute(query, retry_context)
+
+            print("📝 正在生成交互摘要...")
+            summary = self._summarize_interaction(query, response)
+
+            if isinstance(thread_id, str):
+                candidate = thread_id.strip()
+                thread_tag = candidate if candidate.startswith("T-") else None
+            else:
+                thread_tag = None
+
+            new_node = self.tree.commit_operation(plan, query, response, summary, thread_tag=thread_tag)
+            print(f"   └─ 新节点 '...{new_node.id[-6:]}' 已创建，摘要为: '{summary}'")
+            if plan.archive_targets:
+                print(f"   └─ 已归档分支: {', '.join('...'+bid[-6:] for bid in plan.archive_targets)}")
+
+            if self.observer:
+                snapshot = self.tree.compute_metrics(plan.operation)
+                self.observer.on_tree_update(snapshot, new_node)
+
+            self.sliding_memory.record(query, response, summary)
+
+            self.tree.display_tree()
+            self.save_state()
+            print("=" * 60 + "\n")
+            return response
+        finally:
             self._pending_operation = None
-
-        print(f"   └─ 规划结果：operation={plan.operation.value}, parent=...{plan.parent_id[-6:]}")
-        if self.observer:
-            self.observer.on_decision(decision, plan)
-
-        base_context_messages = self.tree.get_context_bundle(plan.context_branch_ids)
-        print(f"📚 聚合上下文分支数量: {len(plan.context_branch_ids)}")
-
-        requires_final = self._requires_final_synthesis(query, decision)
-        guardrail_prompt: Optional[str] = None
-        snapshot_messages: List[Dict[str, str]] = []
-        if requires_final:
-            snapshot_messages = self.tree.get_snapshot_messages()
-            guardrail_prompt = self._final_synthesis_guardrail()
-            context_messages = [{"role": "system", "content": guardrail_prompt}]
-            context_messages.extend(snapshot_messages)
-            context_messages.extend(base_context_messages)
-        else:
-            context_messages = list(base_context_messages)
-
-        print("🚀 正在调用 LLM-Task 生成回复...")
-        response = self.llm_task_execute(query, context_messages)
-
-        if requires_final:
-            missing = self._evaluate_final_response(response)
-            if missing:
-                print(f"⚠️ 终局检查缺项：{', '.join(missing)}，将触发补充生成。")
-                retry_prompt = self._final_synthesis_retry_prompt(missing)
-                retry_context = [{"role": "system", "content": retry_prompt}]
-                if guardrail_prompt:
-                    retry_context.append({"role": "system", "content": guardrail_prompt})
-                retry_context.extend(snapshot_messages)
-                retry_context.extend(base_context_messages)
-                response = self.llm_task_execute(query, retry_context)
-
-        print("📝 正在生成交互摘要...")
-        summary = self._summarize_interaction(query, response)
-
-        thread_tag: Optional[str]
-        if isinstance(thread_id, str):
-            candidate = thread_id.strip()
-            thread_tag = candidate if candidate.startswith("T-") else None
-        else:
-            thread_tag = None
-
-        new_node = self.tree.commit_operation(plan, query, response, summary, thread_tag=thread_tag)
-        print(f"   └─ 新节点 '...{new_node.id[-6:]}' 已创建，摘要为: '{summary}'")
-        if plan.archive_targets:
-            print(f"   └─ 已归档分支: {', '.join('...'+bid[-6:] for bid in plan.archive_targets)}")
-
-        if self.observer:
-            snapshot = self.tree.compute_metrics(plan.operation)
-            self.observer.on_tree_update(snapshot, new_node)
-
-        self.tree.display_tree()
-        self.save_state()
-        print("=" * 60 + "\n")
-        self._pending_operation = None
-        return response
+            self.adaptation.finish_round()
 
 
 # --- 4. CLI entry ----------------------------------------------------------------------
