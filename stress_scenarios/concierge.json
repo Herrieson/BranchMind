@@ -1,0 +1,927 @@
+{
+  "scenarios": [
+    {
+      "scenario_id": "S-STRESS-BD-001",
+      "title": "Concierge Extreme: Rapid Multi-Thread Orchestration",
+      "background": "A high-pressure professional delegates a large volume of personal and work tasks to an AI concierge, spanning health, home, work, and social life. The user frequently switches topics and introduces complex dependencies that must be tracked across threads. Unexpected disruptions force continuous replanning and careful branch control.",
+      "user_profile": "Busy senior product manager in San Francisco with a demanding job and many parallel personal obligations. Detail-oriented but time-starved, expects the AI to remember prior commitments, anticipate conflicts, and deliver decisive, structured options.",
+      "assistant_profile": "An AI concierge with robust branching control: creates and maintains threads, proactively flags conflicts, proposes MERGE for cross-topic synthesis and SPLIT for alternative paths, and keeps a consistent calendar and budget ledger. Communicates succinctly, confirms assumptions, and adapts rapidly to changing constraints.",
+      "threads": [
+        {
+          "thread_id": "T-fitness",
+          "intent": "Design and maintain an 8–12 week fitness plan aligned with schedule and nutrition.",
+          "priority": "medium",
+          "key_entities": [
+            "User",
+            "Trainer Maya",
+            "CoreWorks Gym",
+            "Turkey Trot 5K (2025-11-27)",
+            "Morning time blocks 06:30–07:30"
+          ]
+        },
+        {
+          "thread_id": "T-investing",
+          "intent": "Rebalance and optimize investment portfolio while freeing cash for near-term expenses.",
+          "priority": "medium",
+          "key_entities": [
+            "Vanguard Brokerage",
+            "401k",
+            "Taxable account",
+            "Cash reserve",
+            "VTI",
+            "VXUS",
+            "BND",
+            "I-Bonds",
+            "Monthly DCA $1,500"
+          ]
+        },
+        {
+          "thread_id": "T-renovation",
+          "intent": "Plan and execute a budget-conscious kitchen renovation with minimal downtime.",
+          "priority": "high",
+          "key_entities": [
+            "Oak&Nail Renovation",
+            "ApplianceHub",
+            "Tile options",
+            "Permits",
+            "Budget $15,000 (subject to change)",
+            "Target start early Nov 2025"
+          ]
+        },
+        {
+          "thread_id": "T-parents_health",
+          "intent": "Coordinate parents’ medical checkups, logistics, and diet considerations.",
+          "priority": "high",
+          "key_entities": [
+            "Mom Lila (cardiology)",
+            "Dad Ravi (urology)",
+            "Kaiser HMO",
+            "San Jose clinics",
+            "Transportation",
+            "Low-sodium diet preference"
+          ]
+        },
+        {
+          "thread_id": "T-workA_launch",
+          "intent": "Drive Product Launch for Nimbus 2.0 with marketing and stakeholder readiness.",
+          "priority": "high",
+          "key_entities": [
+            "Nimbus 2.0",
+            "Launch date 2025-11-15",
+            "PM Nora",
+            "Eng Samir",
+            "Marketing Ivy",
+            "Teaser campaign (may shift earlier)"
+          ]
+        },
+        {
+          "thread_id": "T-workB_report",
+          "intent": "Deliver Q3 quarterly report on accelerated timeline.",
+          "priority": "high",
+          "key_entities": [
+            "Q3 report due late Oct",
+            "CFO Trevor",
+            "Boss Dana",
+            "Tableau",
+            "Slide deck",
+            "Data pulls"
+          ]
+        },
+        {
+          "thread_id": "T-language",
+          "intent": "Establish Spanish learning cadence with tutor and app practice.",
+          "priority": "medium",
+          "key_entities": [
+            "Tutor Carla",
+            "Duolingo",
+            "Tue/Thu 20:00–20:45",
+            "Budget $35/hr"
+          ]
+        },
+        {
+          "thread_id": "T-dog_health",
+          "intent": "Manage dog Mocha’s vaccinations, meds, grooming, and contingencies.",
+          "priority": "high",
+          "key_entities": [
+            "Mocha (dog)",
+            "GreenPaws Vet",
+            "Daily meds 09:00",
+            "Walker Leo (Mon/Wed/Fri 12:00)",
+            "Vaccines due ~2025-10-28"
+          ]
+        },
+        {
+          "thread_id": "T-social_weekend",
+          "intent": "Plan weekend social events and outdoor activities without conflicts.",
+          "priority": "low",
+          "key_entities": [
+            "Friends Jess & Omar",
+            "Luna Bistro",
+            "Hike at Lands End",
+            "Budget $150"
+          ]
+        },
+        {
+          "thread_id": "T-car_maintenance",
+          "intent": "Schedule car service and recalls, coordinating with transport needs.",
+          "priority": "medium",
+          "key_entities": [
+            "2018 Toyota RAV4",
+            "Bay AutoCare",
+            "Oil + brake service",
+            "Loaner/ride options",
+            "Recall checks"
+          ]
+        },
+        {
+          "thread_id": "T-wedding",
+          "intent": "Early-stage wedding planning and venue scouting with partner Alex.",
+          "priority": "medium",
+          "key_entities": [
+            "Partner Alex",
+            "Budget $25,000",
+            "Guest list ~120",
+            "Target date 2026-09-12",
+            "Venue: Seacliff Gardens + alternates"
+          ]
+        }
+      ],
+      "dialogue": [
+        {
+          "turn_id": "U1",
+          "thread_id": "T-fitness",
+          "timestamp_hint": "清晨",
+          "user_message": "先帮我把接下来 8 周的健身计划立起来，从本周（10/20 这一周）开始，固定周二/周四/周六 06:30–07:30 在 CoreWorks Gym。目标是 11/27 Turkey Trot 5K。预算每月 $120。请和 Trainer Maya 对齐训练结构（建议周二力量、周四间歇跑、周六长跑），把所有固定时段加到主日历，并检查与其他事项是否有冲突。也请提醒我本周内完成 Turkey Trot 报名。",
+          "expected_assistant_focus": "创建 8 周的固定晨跑/力量训练日程并加到主日历；与 Trainer Maya沟通确认；针对 11/27 5K 制定里程与配速递增计划；预算标注 $120/月；检查与工作、语言课、其他已预约事项的时间冲突并提示。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U2",
+          "thread_id": "T-workB_report",
+          "timestamp_hint": "工作日早上",
+          "user_message": "Q3 报告加速：请在本周（10/20–10/24）每天 08:00–10:00 预留专注时间，用于数据拉取和幻灯片草拟。确认最终截止是 10/31。帮我列一个提纲（Tableau 数据页、关键洞察、风险与对策、下一步），并加到主日历。同时安排和 CFO Trevor 的数据核对在 10/28（周二）15:30（30 分钟），以及和 Boss Dana 的进度更新在 10/29（周三）10:00（30 分钟）。如有冲突请提示并给替代时间窗。",
+          "expected_assistant_focus": "在主日历上为 10/20–10/24 08:00–10:00 建立每日专注块；确认 10/31 截止；起草报告提纲与数据需求清单；预约 Trevor 10/28 15:30 和 Dana 10/29 10:00 的会议并检查冲突（如与其他工作会、狗疫苗或车保养）；准备替代时间建议。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U3",
+          "thread_id": "T-language",
+          "timestamp_hint": "晚间",
+          "user_message": "西语学习：固定周二/周四 20:00–20:45 和 Tutor Carla，上课从 10/23（周四）首节开始。预算 $35/小时。请发邀请给 Carla，并把接下来到 12 月中旬的课期先排好，加入主日历；也请核对是否与周末社交或工作会议冲突。",
+          "expected_assistant_focus": "创建周二/周四 20:00–20:45 的循环课程并邀请 Carla；在主日历中添加并检查与晚间工作事项或社交活动冲突；确认 10/23 首节无冲突；记录课程预算并滚动至全局预算。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U4",
+          "thread_id": "T-dog_health",
+          "timestamp_hint": "周二上午",
+          "user_message": "Mocha 疫苗：帮我在 10/28（周二）GreenPaws Vet 预约一个 10:30 的疫苗时段；同时设置每天 09:00 的用药提醒；确认 Walker Leo 的周一/周三/周五 12:00 遛狗安排都在日历。当天我可能打 Uber 去，回程大概 11:30 左右。请考虑与当天工作安排的时间冲突并预留通勤缓冲。",
+          "expected_assistant_focus": "预约 10/28 10:30 的疫苗并在主日历加入就诊+通勤缓冲；设置每日 09:00 用药提醒；核对并放置 Leo 的 M/W/F 12:00 遛狗事件；检查与工作会议或专注时间冲突并给调整建议。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U5",
+          "thread_id": "T-car_maintenance",
+          "timestamp_hint": "周五下午",
+          "user_message": "汽车保养：预约 10/24（周五）16:00 在 Bay AutoCare 做机油+刹车服务，预计 $450。帮我问是否有代步车或接送服务，如果没有就安排我在店里等（预计 1.5–2 小时）。同时做召回检查。把预约加入主日历，并确认与当天下午/晚上的工作或语言学习无冲突。",
+          "expected_assistant_focus": "与 Bay AutoCare 确认 10/24 16:00 预约、时长与代步车/接送方案；加上召回检查；在主日历加入服务与往返时间；检查与当天工作会议、晚间活动的冲突并更新预算估算 $450。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U6",
+          "thread_id": "T-social_weekend",
+          "timestamp_hint": "周末晚间与早间",
+          "user_message": "周末社交：请在 10/25（周六）19:00 预订 Luna Bistro，4 人，尽量户外座位，与 Jess & Omar。周日 10/26 09:00 计划去 Lands End 徒步，往返 2–3 小时。总预算 $150。把两项都加到主日历并查看天气预报。另：Alex 说爸妈可能 11 月上旬来 SF，尽量保持前两个周末较空（11/1–11/2、11/8–11/9），必要时提醒我调整安排。",
+          "expected_assistant_focus": "预订餐位（4人、户外优先）并加入主日历；创建徒步活动并标注时长与地点；查询天气并备注；将预算 $150 计入社交支出；记录并提醒 11 月前两周末的空档要求，关注与婚礼看场和翻修的潜在冲突。",
+          "escalation_trigger": "Alex_inlaws_visit"
+        },
+        {
+          "turn_id": "U7",
+          "thread_id": "T-parents_health",
+          "timestamp_hint": "上午",
+          "user_message": "父母看诊：请在 11/5 那一周安排 Mom Lila（心内科）和 Dad Ravi（泌尿科）到 San Jose 的 Kaiser HMO，尽量都安排上午时段，减少来回。建议 Mom 11/5（周三）09:00，Dad 11/6（周四）09:30；如无该时段，请排最接近 09:00 的可用档期。安排交通（我开 2018 RAV4，SF↔SJ 单程约 60–90 分钟），在主日历预留通勤时间；备注低钠饮食偏好。",
+          "expected_assistant_focus": "与 Kaiser 预约 11/5 和 11/6 上午的门诊时段（或最接近的备选）；在主日历加入就诊与通勤缓冲；记录 Mom 心内科、Dad 泌尿科与低钠饮食备注；检查与翻修启动或亲友来访的冲突并提示。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U8",
+          "thread_id": "T-renovation",
+          "timestamp_hint": "本周午后",
+          "user_message": "厨房翻修：请同时向 Oak&Nail Renovation 和 ApplianceHub 索取两份报价，包含拆装、台面、瓷砖与基础家电包；预算控制在 $15,000，目标开工 11/03（周一），尽量缩短厨房停用时间。本周先安排两个 30 分钟电话（周二或周四午后均可）讨论方案，并准备瓷砖与家电 shortlist（各 3 款）。另外考虑到 11 月上旬可能有亲友来访，避免在 11/1–11/9 的周末进行大规模施工。",
+          "expected_assistant_focus": "联系两家承包商获取报价与可开工档期；在主日历安排本周 30 分钟电话；准备瓷砖和家电的 3 个候选清单；标注预算 $15k；规划施工期避免 11 月前两周末；检查与通勤、父母就医、婚礼看场的冲突。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U9",
+          "thread_id": "T-investing",
+          "timestamp_hint": "本周",
+          "user_message": "投资与现金流：把组合调整到 70/30（股/债）。现状：401k ~$180k、应税账户 ~$45k、现金 ~$12k。计划立刻在应税账户投 $10k 到 VTI/VXUS（按 70/30 分配），并继续每月 DCA $1,500。同时需要为厨房翻修预留 $5–8k 现金，紧急备用金至少保留 $8–9k。请给出具体交易建议（含可能的卖出与税务影响），并更新全局预算与本线程资金流。",
+          "expected_assistant_focus": "制定到 70/30 的再平衡方案；在应税账户执行 $10k 对 VTI/VXUS 的买入分配；确认继续 DCA $1,500 的节奏；规划释放 $5–8k 现金同时保留 $8–9k 备用金；评估卖出标的的资本利得与税负；更新主预算与线程预算。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U10",
+          "thread_id": "T-workA_launch",
+          "timestamp_hint": "周三中午前",
+          "user_message": "Nimbus 2.0 发布：请建立 11/15 发布的完整 Launch Checklist（里程碑、资产截止、风险清单、预案）。安排一次跨部门同步（PM Nora、Eng Samir、Marketing Ivy）在 10/22（周三）11:00–11:45。另：Boss Dana 提到本月需要一个预简报（pre-brief），请给我 10/29 或 10/30 的可行时间窗并发出占位。把所有事项加入主日历，并检查与 Q3 报告、语言课和其他已定约的冲突。",
+          "expected_assistant_focus": "创建发布清单与时间线；在主日历安排 10/22 11:00–11:45 的跨部门同步；为 Dana 提供 10/29 或 10/30 的预简报时间建议并占位；检查与 Q3 报告专注时间、Trevor/Dana会议、语言课的冲突并调整。",
+          "escalation_trigger": "Dana_prebrief_Oct"
+        },
+        {
+          "turn_id": "U11",
+          "thread_id": "T-wedding",
+          "timestamp_hint": "周日上午",
+          "user_message": "婚礼前期：请先列 3 个场地候选（包含 Seacliff Gardens + 两个替代），总预算 $25,000，来宾约 120，目标日 2026/09/12。先在 11/02（周日）安排一次 Seacliff Gardens 的场地参观，10:00 开始，时长 60–90 分钟。考虑到 Alex 父母可能 11 月来访，如与前两个周末空档要求冲突，请提示我是否需要改到平日。把参观和候选清单加入主日历与筹备文档。",
+          "expected_assistant_focus": "整理 3 个场地候选与基本费用、容量与可用性；预约 11/02 10:00 的 Seacliff Gardens 看场并加入主日历；检查与亲友来访空档要求及其他线程安排的冲突，必要时提供平日备选时段；标注婚礼预算与来宾规模。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U12",
+          "thread_id": "T-workB_report",
+          "timestamp_hint": "今天",
+          "user_message": "关于 Q3 报告，请在今天（10/20）结束前给我一版不超过 10 页的框架草稿，并列明数据来源与需要 Tableau 抽取的字段列表。另外在 10/27（周一）16:00 安排一次我的内审（30 分钟），以便在 10/31 前锁定最终稿。请确认这些时间与其他事项无冲突。",
+          "expected_assistant_focus": "准备 Q3 报告框架草稿（≤10页）与数据字段清单并安排交付时间；在主日历占位 10/27 16:00 内审；检查与语言课、狗疫苗、其他会议的冲突并提出替代方案。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U13",
+          "thread_id": "T-fitness",
+          "timestamp_hint": "清晨与早间",
+          "user_message": "把周二/周四训练跟 Mocha 遛狗整合。发起 MERGE(T-fitness, T-dog_health)：我固定周二/周四/周六 06:30–07:30 在 CoreWorks Gym（周二力量、周四间歇跑、周六长跑）。请在周二/周四安排 1）出门前 06:15–06:25 简短牵引如厕，或 2）训练后 07:35–07:55 轻快步行 20 分钟作为放松，并计入 Mocha 的晨间遛狗；同时对齐每天 09:00 用药提醒。考虑天还未亮，请建议反光牵引/路线。把整合后的例行加入主日历并标注“健身+遛狗”。如与 08:00–10:00 报告专注时段或通勤冲突，请提醒并给替代窗口。",
+          "expected_assistant_focus": "设计周二/周四“健身+遛狗”整合例行，加入主日历，与 Mocha 09:00 用药对齐，检查与工作专注时段冲突并提供替代方案，提出清晨安全装备与路线建议。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U14",
+          "thread_id": "T-workB_report",
+          "timestamp_hint": "周五下午到傍晚",
+          "user_message": "请发起 MERGE(T-workB_report, T-car_maintenance) 检查本周 08:00–10:00 的 Q3 专注块与 10/24（周五）16:00 Bay AutoCare 保养是否有冲突，并加上往返与等待缓冲。若无代步车，我计划现场等 1.5–2 小时；请给具体时间线（何时出发、预计结束、是否影响晚间安排），并预留提醒。若出现延长工时或召回处理导致超时，请给我两套备选：SPLIT A 保持周五、延后晚餐或活动；SPLIT B 改约到下周早晨时段。",
+          "expected_assistant_focus": "整合报告专注时段与周五保养行程，制定详细时间线与缓冲，确认代步/接送可用性，标注潜在超时并提供两套改约备选方案，更新主日历与提醒。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U15",
+          "thread_id": "T-wedding",
+          "timestamp_hint": "周六下午",
+          "user_message": "Alex 希望在 10/25（周六）14:00–17:00 安排两场场地参观（从你此前给的候选清单里挑两个替代场地）。同时，Boss Dana 刚把 pre-brief 定在 15:00–15:45。晚餐与 Jess & Omar 在 19:00。冲突很密集，请用 SPLIT 提方案：1）方案A 保留 pre-brief，场地改为 14:00–15:00 与 16:00–17:00（我在 15:00–15:45 远程参会，需地点安静+Wi‑Fi）；2）方案B 请与 Dana 协调把 pre-brief 改到周六上午或周一，场地按 14:00–15:00 与 15:30–16:30 连排；3）方案C 保留 pre-brief，把第二个场地改到周日 10/26 13:30–14:30（需与徒步返回时间对齐）。所有方案都要确保 19:00 晚餐不迟到或改到 19:30/20:00。先在主日历做软占位。",
+          "expected_assistant_focus": "识别周六场地参观、pre-brief 与晚餐的冲突，提出三套拆分方案，软占位并规划旅行与缓冲，确认远程参会条件，与相关方协调改期可能。",
+          "escalation_trigger": "Saturday_conflicts"
+        },
+        {
+          "turn_id": "U16",
+          "thread_id": "T-workB_report",
+          "timestamp_hint": "周六/周一/周三午前",
+          "user_message": "关于 pre-brief：请先向 Dana 说明我周六下午已有婚礼场地参观与晚餐安排，建议改期。给她 3 个候选窗：10/25（周六）10:00–10:45、10/27（周一）11:30–12:15、10/29（周三）11:15–12:00（需与 10:00 与她的进度更新避免冲突）。若她坚持 10/25 15:00–15:45，我将远程参加，请确保我在两场参观之间有安静会议点。请用 SPLIT 标注“改期”与“保留原时段”两套执行清单，并更新主日历提醒。",
+          "expected_assistant_focus": "与 Dana 协调 pre-brief 改期，提供三个可行时间窗并检查与既有会议冲突；准备保留原时段的远程参会后勤与地点安排；生成两套执行清单并更新主日历与提醒。",
+          "escalation_trigger": "prebrief_conflict"
+        },
+        {
+          "turn_id": "U17",
+          "thread_id": "T-social_weekend",
+          "timestamp_hint": "周六晚",
+          "user_message": "请帮我起草一条给 Jess & Omar 的短信：确认我们 10/25（周六）19:00 的 Luna Bistro 预订（偏户外位），并说明我当天下午可能在看婚礼场地、还可能有一个简短工作电话；预计 19:05–19:15 到达，如需要可把预订改到 19:30。也想邀请他们周日 10/26 09:00 去 Lands End 一起徒步，2–3 小时，是否有兴趣？请语气轻松，并附上天气与穿着建议。短信发出前请先向我预览。",
+          "expected_assistant_focus": "撰写友好短信草稿，清晰传达时间与可能迟到的背景，提出改订时间选项；邀请周日徒步并附天气/穿着建议；发送前预览。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U18",
+          "thread_id": "T-parents_health",
+          "timestamp_hint": "11月上旬周末",
+          "user_message": "爸妈可能 11/8–11/9 来 SF。请发起 MERGE(T-parents_health, T-renovation)：在不影响 11/5–11/6 他们的 San Jose 就诊与低钠饮食安排的前提下，周末我希望家里可正常使用厨房（避免重施工）。请与 Oak&Nail 确认施工节奏：11/3 开工，尽量在 11/7 前完成高噪音/停水停气步骤，11/8–11/9 仅做收尾或暂停。主日历上先软占位“父母来访（待定）”，并预留 SF 城内轻度行程（公园散步/简餐）。如施工不可避，请给“延期来访到 11/15 之后”的备选，并评估对 Nimbus 2.0 发布周的影响。",
+          "expected_assistant_focus": "跨线程协调父母来访与装修施工，确认施工时间线以保证 11/8–11/9 厨房可用；在主日历软占位来访与轻活动；若不可避冲突，提出延期来访方案并评估对发布周负荷影响。",
+          "escalation_trigger": "parents_visit_coordination"
+        },
+        {
+          "turn_id": "U19",
+          "thread_id": "T-renovation",
+          "timestamp_hint": null,
+          "user_message": "瓷砖 shortlist 请先从 3 款缩到 2 款，并向供应商申请样品（寄送到家，尽快于 10/27 前到）。请与 Alex 对齐审美（偏浅灰或暖白，易清洁），并在本周安排两通电话：10/21（周二）16:00 与 ApplianceHub（30 分钟），10/23（周四）15:00 与 Oak&Nail（30 分钟）。加到主日历并检查与工作块、语言课是否冲突。如供应商只能工作日午间，请给替代时段。",
+          "expected_assistant_focus": "缩窄瓷砖选项至2款并申请样品，与 Alex 对齐审美；安排并确认两通供应商电话，检查与报告与语言课冲突；更新主日历与装修预算跟踪。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U20",
+          "thread_id": "T-language",
+          "timestamp_hint": null,
+          "user_message": "考虑 Alex 的作息（周一至周五 07:00–15:00），我想在每周固定西语课（周二/周四 20:00–20:45）的基础上，加一个和 Alex 的配合练习。请给我 3 个可行方案并在主日历做软占位：1）周四课后 20:50–21:10 夫妻对话练习；2）周一 19:30–20:00 轻练习（不与任何工作会议冲突）；3）周六早上 08:30–09:00（需与周六长跑结束与当天其他事项对齐，10/25 那天可能不适合）。请检查与婚礼参观/社交/工作电话的冲突并建议优选。",
+          "expected_assistant_focus": "提出三种与 Alex 可行的练习时间方案，检查各项与现有活动冲突并建议优先选择，主日历软占位并设置提醒。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U21",
+          "thread_id": "T-dog_health",
+          "timestamp_hint": null,
+          "user_message": "Nimbus 发布周我可能需要过夜照看：请先预订 11/14（周五）晚至 11/16（周日）中午的宠物看护（家中过夜优先），每天按时 09:00 喂药、晚间 20–30 分钟散步。可优先询问 Walker Leo 是否提供周末和过夜服务；如不行，请在 Rover 上筛选 3 位评价高、近我家的 sitter（标注价格与可用性）。预算先按 $45–$60/晚。加到主日历并设置提醒，若需钥匙或见面，请在 11/10 前安排。",
+          "expected_assistant_focus": "确认 Leo 的周末/过夜可用性与价位，如不可用则在 Rover 筛选并比较3位看护；完成预订与主日历提醒；安排 11/10 前的钥匙交接/见面。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U22",
+          "thread_id": "T-investing",
+          "timestamp_hint": null,
+          "user_message": "市场正值财报周波动较大，我对立刻在应税账户投入 $10k（VTI/VXUS 70/30）有点犹豫，但又需要在 11/03 前为厨房预留约 $5k 现金，同时不影响每月 $1,500 的 DCA。请给我 SPLIT 两套执行策略并标注税务/风险：A）暂缓全额买入，改为 10/23 买入 $5k、财报周后（例如 11/05）再买 $5k；B）维持 DCA，取消这次 $10k 买入，改为将应税账户里一部分 BND 卖出 $5k 释放现金（估算资本利得/税负）。两套都要确保紧急备用金保持 $8–9k。并更新资金滚动台账与主日历上的“交易提醒”。",
+          "expected_assistant_focus": "提出两套分步或替代执行策略，评估税务影响与风险，确认不触及紧急备用金底线；更新投资台账与交易提醒，并与装修现金需求对齐。",
+          "escalation_trigger": "market_volatility"
+        },
+        {
+          "turn_id": "U23",
+          "thread_id": "T-car_maintenance",
+          "timestamp_hint": "周五下午",
+          "user_message": "请与 Bay AutoCare 确认是否有代步车或 Lyft/shuttle；如无，请把 10/24（周五）15:30 出发→16:00–18:00 保养→18:30 回家 的时间线加到主日历。也请确认召回检查是否可能导致留车过夜；如是，请优先安排周一早取车，不影响 08:00–10:00 的 Q3 专注块。并设置短信提醒我在 10/24 13:00 前确认预约。",
+          "expected_assistant_focus": "确认代步或接送方案，建立详细保养时间线与主日历条；核实名召回是否需留车并规划周一早取车不影响工作块；设定预约确认提醒。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U24",
+          "thread_id": "T-fitness",
+          "timestamp_hint": null,
+          "user_message": "考虑 10/25（周六）下午的婚礼参观与可能的 pre-brief，我的长跑可能需要调整。请用 SPLIT 给我三种安排并更新训练计划：1）保持周六 06:30–07:30 长跑（路线建议，结束后留 30 分钟拉伸与早餐）；2）改到周日 10/26 07:00–08:00，之后 09:00 去 Lands End 徒步（注意不宜过度疲劳）；3）将本周长跑拆分为周五清晨 06:30–07:00 轻松跑 + 周六 06:30–07:00 轻松跑（总量相当）。同时保持与 Mocha 的晨间整合（MERGE 与 T-dog_health），并确保不影响 08:00–10:00 报告专注块。",
+          "expected_assistant_focus": "给出三套训练调整方案并评估疲劳与行程冲突，维持与 Mocha 的整合例行；更新主日历与训练计划，同时确保不影响工作专注时段。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U25",
+          "thread_id": "T-workB_report",
+          "timestamp_hint": "周一早上",
+          "user_message": "发起 MERGE(T-workB_report, T-workA_launch, T-fitness, T-dog_health, T-social_weekend)：请为 2025-10-20（周一）至 10-26（周日）生成一份一体化周计划（落到主日历），涵盖：1）Q3 报告每日 08:00–10:00 专注块（周一至周五）；2）健身：周二/周四 06:30–07:30（周二力量、周四间歇跑）、周六长跑（已在 U24 提出 3 个 SPLIT 备选）+ 与 Mocha 的晨间整合（出门前 06:15–06:25 简短牵引如厕 或 训练后 07:35–07:55 放松步行，计入遛狗），每天 09:00 用药提醒；3）语言课：周二/周四 20:00–20:45 + 我与 Alex 的配合练习备选（U20 的 3 个时间窗，择其一或二软占位）；4）工作/通话：10/21（周二）16:00 ApplianceHub；10/23（周四）15:00 Oak&Nail；5）车辆保养：10/24（周五）15:30 出发→16:00–18:00 保养→18:30 回家（如无代步车，现场等 1.5–2 小时）；6）婚礼：10/25（周六）两场场地参观 + 可能的 15:00–15:45 pre-brief（U15/U16 的 SPLIT A/B/C 约束）；7）社交：10/25（周六）19:00 与 Jess & Omar 晚餐（可弹性至 19:30），10/26（周日）09:00 Lands End 徒步 2–3 小时。请为上述项添加通勤/缓冲（例如：家↔CoreWorks Gym 各 10–15 分钟；家↔Bay AutoCare 各 25–35 分钟；场地参观与晚餐之间预留 20–30 分钟挪车/找位）。重点：标注 10/25（周六）容量可能过载，明确冲突点并给微调建议（如将周六长跑拆分或前移、晚餐改 19:30、第二场地改到周日）。所有变更都需避免影响 08:00–10:00 专注块，并与 Mocha 的照护一致。",
+          "expected_assistant_focus": "整合并出一周主日历；为每项活动添加通勤与缓冲；识别并标记周六过载与冲突；结合 U15/U16/U24 现有 SPLIT，提出具体微调与日程占位；确保与Q3专注块、语言课和已定通话不冲突；加入 Mocha 遛狗和用药提醒。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U26",
+          "thread_id": "T-workA_launch",
+          "timestamp_hint": "周二下午",
+          "user_message": "营销把 Teaser campaign 提前到 2025-11-01（原本更晚），需要全盘加速。请帮我重基线 Nimbus 2.0 的营销与资产产出节奏：倒排关键里程碑（脚本/叙事、视觉与着陆页、Beta 截图与演示视频、邮件/博客、审批与法务、发布清单），明确负责人（Ivy/设计、Nora/PM、Samir/工程、我/叙事与审批），标注日期到小时，并与本周（10/20–10/26）的主日历冲突检查（Q3 08:00–10:00、两次供应商电话、语言课、车辆保养、周末场地参观）。给我两套执行路径：SPLIT A 晚间集中制作（周二/周四课后与周三晚），周末仅轻度校对；SPLIT B 将部分制作移到周末上午/下午，并对周六/周日活动做最小改动。请在主日历上软占位“Teaser 资产制作块”，同时输出风险清单（时间压缩、素材不足、审批延迟）与缓解措施（模板化、并行、预审批）。",
+          "expected_assistant_focus": "记录营销时间线变更并触发重排；给出可执行的倒排计划与负责划分；与现有周计划冲突检测；产出两套SPLIT执行路径；添加具体制作时间块；列出风险与缓解；通知相关干系人准备前置素材。",
+          "escalation_trigger": "Teaser提前至2025-11-01"
+        },
+        {
+          "turn_id": "U27",
+          "thread_id": "T-workA_launch",
+          "timestamp_hint": "周三中午",
+          "user_message": "帮我草拟 pre-brief 的谈话要点，既要对齐 Nimbus 2.0 的发布叙事，也要报告 Q3 工作进度（给 Dana/高层的预热）。结构建议：1）3 句话电梯陈述（问题→方案→价值）；2）发布日期与当前 readiness（工程、营销、支持）状态；3）Teaser 提前的影响与对策；4）风险与依赖（数据、法务、平台兼容）；5）下周关键动作与需要 Dana 支持的决策点。请给两个版本：SPLIT A “周六远程版”（15 分钟，适配我在场地参观间隙的环境，精简图示/更口语化）；SPLIT B “周一办公室版”（20 分钟，含 1–2 张指标图与里程碑表）。两版都请标注我需要提前准备的素材清单（截图、数值、KPI）。",
+          "expected_assistant_focus": "产出结构化要点与两版SPLIT文稿框架；对齐发布叙事与Q3进度；明确需要的素材与数据清单；适配不同场景时长与形式。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U28",
+          "thread_id": "T-fitness",
+          "timestamp_hint": "周一晚",
+          "user_message": "请制定 10/20–10/26 的训练配套营养计划（周二力量、周四间歇、周六长跑的前后补给与全天宏量营养分配），并兼顾我爸妈预计 11/08–11/09 来访的低钠食谱预案。具体：1）本周每日菜单（早餐/午餐/晚餐/加餐），训练日建议 1.4–1.6 g/kg 蛋白、适度碳水与低饱和脂；2）低钠原则（≤1,500 mg/日）与替代调味；3）周内安排 2 个 45 分钟备餐窗口（避开周二/周四晚课、周五保养、周六参观），建议时段并加到主日历；4）列购物清单与预计预算；5）为 11/08–11/09 制作 4 道低钠菜谱备选（如柠檬香草烤鸡、番茄燕麦炖菜等），并标注可提前一周试做的安排。注意与 Mocha 的晨间例行与工作块不冲突。",
+          "expected_assistant_focus": "提供一周的营养菜单与训练日补给；规划两个不冲突的备餐时间并加到日历；给低钠菜谱与购物清单、预算；确保与现有活动不冲突并标注可试做时间。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U29",
+          "thread_id": "T-renovation",
+          "timestamp_hint": "周二下午",
+          "user_message": "请提出一个 ≤$4,000 的厨房电器组合（冰箱+灶/烤箱+洗碗机，必要时含微波），优先 Energy Star 与易清洁不锈钢外观，并与 11/03 开工的施工节奏匹配：理想送货窗 11/01–11/03。给我 2–3 套方案（品牌/型号/价格/保修/噪音等级/尺寸），并检查与现有橱柜尺寸兼容及是否需要额外安装件。将 10/21（周二）16:00 与 ApplianceHub 的电话改为“方案评审 + 送货协调”，在主日历标注；同时与 Oak&Nail 对齐安装时间。若 $4,000 内难以覆盖全部，请给降配优先级与替代建议（例如先换洗碗机+灶，冰箱延后），并更新装修总预算的滚动表。",
+          "expected_assistant_focus": "提出电器组合选项与明细；核尺寸与安装需求；与施工开始时间对齐送货与安装；在主日历更新电话目的与后续安排；如超预算，提供降配策略并更新预算台账。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U30",
+          "thread_id": "T-investing",
+          "timestamp_hint": "周三上午",
+          "user_message": "发起 MERGE(T-investing, T-renovation)：为厨房施工与电器，除现有现金外再筹 $8,000，尽量降低资本利得且保持紧急备用金 $8–9k。请给两套 SPLIT 执行：SPLIT A 优先在应税账户出售 BND 的特定税批（lot）释放 ~$8k（计算估算资本利得与税负，附具体卖出份额与价格敏感度），维持每月 $1,500 DCA 不变；SPLIT B 组合方案：卖出 BND ~$5k + 当月暂缓 $1,500 DCA + 从现金储备挪 $1,500（不跌破$8k底线），总共 ~$8k。两套都要出：交易日期建议（避开 10/23/10/24 繁忙时段）、主日历“交易提醒”、更新资金滚动台账与对装修预算的映射。并请核对与 U22 的既有交易计划，避免相互打架；如需调整 10/23 的买入，请给我简短对比说明。",
+          "expected_assistant_focus": "合并投资与装修现金需求；提供两套SPLIT方案含税务估算与具体操作；设置交易提醒与选择不冲突日期；更新台账与避免与U22冲突；确保紧急备用金安全线。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U31",
+          "thread_id": "T-dog_health",
+          "timestamp_hint": "周二早上",
+          "user_message": "帮我在 GreenPaws 预约 10/28（周二）疫苗注射，时间选 08:00 或 16:00，择“总体冲突最小”的路径并给出 SPLIT 对比。约束：周二 06:30–07:30 我在 CoreWorks（周二力量），Mocha 每天 09:00 用药，08:00–10:00 是 Q3 专注块，晚间 20:00–20:45 西语课。请分别模拟两种方案的时间线（出发、到店、接种、等候、返回），加通勤与 10 分钟 Check-out 缓冲，并标注是否会侵占 08:00–10:00 的工作块或晚间课程。结论请推荐其一，并在主日历锁定预约与提醒（含带证件、疫苗本、零食），若需改期请给备选日期/时间窗。",
+          "expected_assistant_focus": "比较08:00与16:00两种预约路径对现有周二日程的影响；给出详细时间线与冲突判断；推荐较优并下单预约；在主日历设置提醒与材料清单；若冲突不可避免提供备选时间。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U32",
+          "thread_id": "T-social_weekend",
+          "timestamp_hint": "周五下午",
+          "user_message": "基于一体化周计划，请更新周末社交安排：1）Luna Bistro 周六晚餐保留 19:00（若周六过载则二选一：SPLIT A 改 19:30、SPLIT B 保留 19:00 但建议场地参观后直接前往，预留停车与等位时间）；2）周日 09:00 Lands End 徒步（2–3 小时），请加入天气/体感温度/穿着建议与路线备选（泥泞或强风备选）。同时沿用 U17 的短信草案进行微调（加入我可能在 15:00 有短会的说明），先发我预览再发送。请把晚餐与徒步的出行时间与缓冲写入主日历，确保不与可能的第二场地改到周日（方案C）冲突。",
+          "expected_assistant_focus": "完善周末社交安排与两套SPLIT晚餐选择；添加徒步的天气与装备建议；准备短信预览并在确认后发送；主日历加入通勤与缓冲；检查与方案C的场地参观冲突并给解决。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U33",
+          "thread_id": "T-wedding",
+          "timestamp_hint": "周四上午",
+          "user_message": "请输出婚礼预算分配大纲（总预算 $25,000）：建议比例与区间范围（场地/餐饮/摄影摄像/服装/花艺与布置/音乐与主持/请柬与杂项/应急预备），并附“押金与尾款”时间线（假设 2026-09-12），标注与我当前现金流的匹配度（结合 T-investing 的现金计划：近期需预留场地订金）。另外，请列出 10/25/10/26 场地参观可能涉及的订金政策与取消条款（Seacliff Gardens + 两个替代场地），并在主日历加上“订金决策窗口”的软占位（不晚于 11/15）。",
+          "expected_assistant_focus": "输出可执行的预算分配与押金时间线；与投资现金计划联动；汇总各场地订金与取消政策；在主日历加决策窗口；提醒潜在资金压力与应对。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U34",
+          "thread_id": "T-workB_report",
+          "timestamp_hint": "周一上午",
+          "user_message": "把本周（10/20–10/25）Q3 报告的工作拆解为每日小结与可交付：周一/周二数据拉取与清洗（Tableau 刷新与注释）、周三分析与发现梳理、周四初版幻灯与指标图、周五复核与高层摘要草拟。请在主日历标出 30–45 分钟的“次要工作块”（避开 08:00–10:00），用于邮件草拟、数据复核与与 CFO Trevor 的同步（建议周三或周四中午）。考虑到 10/24 下午车辆保养，请将周五晚的工作负荷降至最低，并在 10/25 pre-brief 前给我 10 分钟复盘提醒。若发现数据延迟或缺失，请用 SPLIT 标注 A“简版报告（聚焦核心指标）”、B“延后完整报告（改至下周一出）”。",
+          "expected_assistant_focus": "把Q3报告拆解到日程并加次要工作块；安排与Trevor的同步；调整周五负荷；设置pre-brief复盘提醒；准备数据问题的两套SPLIT应对。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U35",
+          "thread_id": "T-fitness",
+          "timestamp_hint": "周五晚上",
+          "user_message": "关于本周长跑，请结合一体化周计划与周六容量，给出定稿建议并更新训练日历：若周六过载，请优先采用 SPLIT 方案2（周日 07:00–08:00 长跑，随后 09:00 徒步，注意强度控制与补给）；否则保留方案1（周六 06:30–07:30 长跑，结束后 30 分钟拉伸与早餐）。同时完善与 Mocha 的晨间整合（出门前短牵引或训练后放松步行），并给我两条安全路线（低车流、有路灯/反光建议）。",
+          "expected_assistant_focus": "依据周六容量与冲突选择长跑方案并更新主日历；保持与Mocha遛狗整合；提供具体安全路线与装备建议；安排拉伸与补给时间。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U36",
+          "thread_id": "T-renovation",
+          "timestamp_hint": "周一下午",
+          "user_message": "再确认 10/27 前瓷砖样品寄送进度（U19），并评估电器提前到货的暂存方案：若 11/01–11/03 送达但当天无法安装，是否可暂存家中（标注占地与防磕碰措施）或让 ApplianceHub 提供仓储（费用与时长）。请与 Oak&Nail 对齐 11/03 开工的详细工序安排（高噪/停水停气尽量在 11/07 前完成，以配合 11/08–11/09 父母来访），把“高噪/停水窗口”软占位到主日历并提醒我提前备餐。若对时间线有风险，请列出 MERGE(T-renovation, T-parents_health) 的备选方案（例如来访改期至 11/15 之后）及对 Nimbus 发布周的影响提示。",
+          "expected_assistant_focus": "跟进瓷砖样品物流；评估并安排电器暂存方案；与施工方对齐工序与关键窗口；在主日历软占位影响项与备餐提醒；如进度风险，提出与父母来访的MERGE备选并提示发布周影响。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U37",
+          "thread_id": "T-parents_health",
+          "timestamp_hint": "2025-11-06 上午",
+          "user_message": "请帮我在 Kaiser 为妈妈 Lila（心内）和爸爸 Ravi（泌尿）预约 2025-11-06（周四）上午在圣何塞的“背靠背”门诊：首选 09:30 心内 + 10:30 泌尿（或反过来），每科就诊预计 30–45 分钟；如同院不同科不可用，则改为同日相近时段（间隔 ≤90 分钟）。请：1）核对 Kaiser SJ 可预约的具体诊室与医生（心内/泌尿），是否需要转诊或事先化验单；2）标注就诊材料（医保卡、既往用药清单、上次检查报告）；3）把预约与“出发/到达/停车/就诊/等候/取药/返程”的时间块加入主日历（SF ↔ SJ 单程 60–90 分钟，预留拥堵缓冲）。同时发起 MERGE(T-parents_health, T-car_maintenance, T-dog_health)：给我 11/06 当天的综合后勤方案（车辆可用性、备选交通、Mocha 09:00 用药与中午照护安排）。若 11/06 上午无连排号，请给“同日相近时段”与“改到 11/07 上午”的两套备选。",
+          "expected_assistant_focus": "查询并锁定 Kaiser 心内/泌尿在 11/06 上午的连续时段预约；确认转诊/材料要求；生成含通勤与院内流程的时间块；MERGE 出车务与狗狗照护的配套方案；若不可连排，提供当天近时段或次日备选并标注优劣。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U38",
+          "thread_id": "T-car_maintenance",
+          "timestamp_hint": "2025-11-04 晚上",
+          "user_message": "请确认我的 2018 Toyota RAV4 是否有未处理的官方召回或需要的额外检查（含刹车/液体/胎压），以及 Bay AutoCare 的近期档期。若需在 11/05–11/07 进场，请给 SPLIT：A 11/05（周三）15:30 出发→16:00–18:00 检修，现场等或申请代步车；B 11/07（周五）09:00 进场→11:00 出厂。两方案都请评估是否影响 11/06 的圣何塞医疗行程与我早间工作块（08:00–10:00）。若有代步车/接送服务，请标注费用与时长；无则给公共交通/共享出行备选。把候选预约与通勤缓冲加到主日历，并在 11/04 晚加入“召回查询与确认”的 10 分钟提醒。",
+          "expected_assistant_focus": "检查召回与必需检修项目；给出 11/05 与 11/07 两个可行进场方案的详细时间线与影响评估；说明是否提供 loaner/接送与成本；在主日历软占位并与 11/06 医疗行程及工作块做冲突检查；添加 11/04 的召回确认提醒。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U39",
+          "thread_id": "T-renovation",
+          "timestamp_hint": null,
+          "user_message": "刚收到 Oak&Nail 的更新：因检查排期积压，建议把厨房开工从 11/03 改到 11/10。请做 SPLIT：A 维持 11/03 原计划；B 改到 11/10。两方案请对比：1）高噪/停水/停气窗口安排（尽量避开 11/08–11/09 父母来访）；2）与 11/01 Teaser 加速、Q3 报告收尾、语言课与周末社交的冲突；3）电器送货与暂存（11/01–11/03）是否需调整；4）预算与资源（工人排期、检查风险）。请给我风险清单与缓解措施（预封门、临时台面、一次性餐具、备用用水），并在主日历上更新“高噪/停水软占位”。如选择 B（11/10），请明确父母来访期间厨房可用程度与需要的临时方案。",
+          "expected_assistant_focus": "记录并触发装修日期变更的 SPLIT；对比 11/03 与 11/10 两方案的施工窗口、与父母来访和工作/社交/语言的冲突；给风险与缓解建议；更新主日历的高噪/停水占位与电器收货/暂存安排；明确来访期间的可用性。",
+          "escalation_trigger": "contractor_shift_1110"
+        },
+        {
+          "turn_id": "U40",
+          "thread_id": "T-renovation",
+          "timestamp_hint": null,
+          "user_message": "无论最终开工日期，请帮我制定 11/01–11/02 周末“厨房打包与清空”的详细清单与工时计划：1）按区域列任务（储物柜、抽屉、台面、冰箱/冷冻、清洁用品），每项预计时长；2）耗材清单（纸箱/收纳桶/标签胶带/气泡膜/保鲜袋/清洁抹布），含预算与购买地点；3）危险品与易碎品处理原则；4）两天的时间分配建议（例如周六 10:00–12:00 与 14:00–16:00；周日 10:00–12:30），并加入主日历软占位。注意避开周日 09:00 Lands End 徒步、并与可能的长跑调整不冲突；最后给我“垃圾清运/捐赠”预约的备选时间窗。",
+          "expected_assistant_focus": "输出细化的打包清单与工时估算、耗材与预算清单；提议两天的时间块并在主日历软占位；安排垃圾清运与捐赠预约窗；检查与周末徒步/长跑冲突并给调整建议。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U41",
+          "thread_id": "T-renovation",
+          "timestamp_hint": null,
+          "user_message": "如果厨房停用预计 ≥3–5 天，请给我“吃饭不掉链”的备选：SPLIT A 以周末集中备餐+冷冻为主（标注每餐份量与营养，尽量低钠，兼顾训练日的碳水/蛋白）；SPLIT B 以附近外食/外卖为主（列出 6–8 家 10–15 分钟车程内的选项，标注低钠可选、营业时间与人均预算）。请：1）给 7 天的餐次计划与日均预算；2）购物清单与一次性餐具/保温盒的补给；3）针对 11/08–11/09 父母来访，列低钠菜单与附近低钠餐厅备选；4）把“备餐窗口”软占位到主日历（避开工作/语言课）。",
+          "expected_assistant_focus": "生成两套备餐/外食 SPLIT 方案含营养与低钠约束；给 7 天餐次与预算、购物与耗材清单；为父母来访提供低钠菜单与餐厅备选；在主日历占位备餐时间并避开工作/语言课。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U42",
+          "thread_id": "T-workA_launch",
+          "timestamp_hint": "2025-10-27 当周",
+          "user_message": "把 Work A（Nimbus 2.0 Teaser/发布资产）与 Work B（Q3 报告）清晰分流，发起 MERGE(T-workA_launch, T-workB_report)：请列负责人映射（Ivy/视觉&LP、Nora/PM、Samir/工程、我/叙事&审批），并输出 2025-10-27 至 11-02 的小时级计划。给两套执行路径：SPLIT A 晚间集中制作（周二/周四课后 20:55–22:45、周三 20:00–22:00），周末仅轻校对；SPLIT B 周末分担（周六/周日上午或下午制作块）并尽量保持社交与装修准备。需要：1）将“Teaser 资产制作块”软占位到主日历；2）列冲突与缓解（西语课、社交、车辆保养/装修打包）；3）风险清单（时间压缩/素材不足/审批延迟）与缓解（模板化、并行、预审批）。",
+          "expected_assistant_focus": "在两套 SPLIT 路径下排出 10/27–11/02 的制作与报告节奏；标注负责人与里程碑；在主日历软占位制作块；识别与语言课/社交/装修的冲突并给缓解；输出风险与对策。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U43",
+          "thread_id": "T-workB_report",
+          "timestamp_hint": "2025-10-29 中午",
+          "user_message": "为加速 Q3 报告，请在 10/27–10/31 每天追加 15 分钟“收尾/核对”微块（避开 08:00–10:00）；并于 10/29（周三）或 10/30（周四）12:15–12:45 与 CFO Trevor 快速同步，优先 10/29。若数据刷新仍延迟，请给 SPLIT：A 简版（核心指标+注释，10/31 提交）；B 完整版顺延至 11/03（周一）。请列需要我提前准备的素材清单（关键指标、对比截图、异常说明），并检查与 Teaser 制作块的冲突，给具体微调建议。",
+          "expected_assistant_focus": "在主日历新增每日 15 分钟核对块；安排与 CFO 的中午同步并确认时间；提供简版与顺延的两种交付 SPLIT；列素材清单；与 Teaser 制作块冲突检查并提出微调。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U44",
+          "thread_id": "T-language",
+          "timestamp_hint": "2025-10-28 晚上",
+          "user_message": "西语课排期：请与 Tutor Carla 确认 10/28（周二）与 10/30（周四）20:00–20:45 正常开课；若 10/28 因 Mocha 疫苗或临时工作冲突，请给 SPLIT 备选：A 当晚改 21:00–21:45；B 改到 10/29（周三）20:00–20:45。并为 10/27–11/02 制定轻量练习节奏：1）每日 10–15 分钟 Duolingo；2）两次我与 Alex 的口语练习（建议周三 19:00–19:30、周日 18:30–19:00）。全部占位加到主日历（含 5–10 分钟缓冲），并提示与 Teaser 制作块的衔接。",
+          "expected_assistant_focus": "与 Carla 确认两次课程并提供 10/28 的两种改期 SPLIT；安排一周轻量练习与与 Alex 的口语时间；把所有占位加入主日历并与制作块衔接，标注缓冲与冲突提醒。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U45",
+          "thread_id": "T-social_weekend",
+          "timestamp_hint": null,
+          "user_message": "Jess 刚反馈：Luna Bistro 周六 19:00 已满，但 20:30 可订。请做 SPLIT：A 保留 Luna 改 20:30（评估与场地参观后的衔接、停车与等位预留）；B 保持 19:00–19:30 时段但更换餐厅（给 3–4 家同级替代，考虑步行或短途驾车，标注人均预算与可订位）。请评估周六容量是否过载，并给主日历的调整建议（例如参观后直接前往或把第二场参观改至周日）。请用 U17 的短信草案为 Jess & Omar 微调后发我预览。",
+          "expected_assistant_focus": "记录晚餐订位变化并触发 SPLIT 两种晚餐方案；评估周六负荷与参观/晚餐衔接；提出主日历调整；生成并优化短信草案；给替代餐厅候选与预算。",
+          "escalation_trigger": "luna_1930_full_2030_open"
+        },
+        {
+          "turn_id": "U46",
+          "thread_id": "T-parents_health",
+          "timestamp_hint": "2025-11-06 全天",
+          "user_message": "请细化 11/06 医疗日的整日行程与交通：假设 07:45 从 SF 出发→约 09:15 到 Kaiser SJ；两科就诊+等候与可能取药→午餐低钠简餐 12:15–12:45（院区或附近）；返程 13:00–14:30。请把驾驶/停车/签到/就诊/等候/取药/午餐/返程的时间块与缓冲落到主日历，并给“若拥堵或加检”的延展备选（至 15:30）。同时 MERGE(T-parents_health, T-car_maintenance, T-dog_health)：安排 Leo 或替代照护在 11/06 中午处理 Mocha 的遛弯（或家中短时看护）并确认 09:00 用药提醒已在；车辆当天状态确认可用，若不可用请给 Caltrain + Lyft 的后备路线与时间。",
+          "expected_assistant_focus": "制定详细日程与通勤/院内流程时间块；提供延展备选以应对拥堵/加检；MERGE 协调狗狗照护与车辆状态；加入主日历并标注关键提醒（用药/停车/后备交通）。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U47",
+          "thread_id": "T-workA_launch",
+          "timestamp_hint": "2025-10-27 至 11-10",
+          "user_message": "请输出 2025-10-27 至 11-10 的主日历“总览版”，发起 MERGE(T-workA_launch, T-workB_report, T-renovation, T-parents_health, T-language, T-social_weekend)：至少覆盖这五个线程（如可附车务/狗狗关键提醒）。重点标注：1）硬约束：08:00–10:00 工作专注块、语言课、医疗预约；2）软约束：周末社交、装修打包与可能的开工；3）关键日期：11/01 Teaser、11/01–11/02 厨房打包、11/06 医疗日、11/08–11/09 父母来访、（SPLIT A 11/03 或 SPLIT B 11/10）开工。请突出冲突点并给具体微调建议（如把制作块挪到晚间或周末、社交改时、备餐窗口前移）。",
+          "expected_assistant_focus": "跨线程 MERGE 生成 10/27–11/10 的总览主日历；标注硬/软约束与关键日期；识别冲突并提出可执行的微调建议；在需要处加入占位与提醒。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U48",
+          "thread_id": "T-car_maintenance",
+          "timestamp_hint": "2025-11-04 傍晚",
+          "user_message": "基于总览，请给 11/05–11/07 的车辆安排建议与当日行车准备：若存在召回/额外检修，尽量避开 11/06 医疗日；若无需进场，则保持待命。请在主日历加入 11/04 18:00 的“车辆状态检查”提醒（线上/电话 10 分钟）。另外准备“去圣何塞当日行车检查清单”：油量/胎压/备胎/应急包/保险卡/加油站备选（沿 101/280 各 1–2 家）。如建议使用租车或共享出行作为后备，请给预算估算与预订窗口（取/还车时间块）。",
+          "expected_assistant_focus": "结合总览确定是否需要召回/检修并避免 11/06；添加 11/04 的车辆状态检查提醒；准备出行检查清单与加油站备选；如需租车/共享出行，给预算与预订时间块并加入主日历。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U49",
+          "thread_id": "T-workB_report",
+          "timestamp_hint": "立即",
+          "user_message": "刚接到 CFO 通知：Q3 报告的最终提交提前到 10/29（周三）17:00。请立即重排 10/27–10/29 的制作/核对/审批节奏，发起 SPLIT：A 强压缩（每日晚间加班块 + 午间快审），目标 10/29 15:00 内版定稿；B 范围收敛（删非核心可视化，仅保留 KPI/趋势 + 解释），目标 10/29 12:00 内版定稿，下午仅微调。两方案都请：1）列小时级时间块（避开 08:00–10:00 专注块与已排西语课）；2）与 Teaser 资产制作块的冲突与挪动建议；3）对 CFO Trevor 的快速同步改约（优先 10/28 12:15–12:45，备选 10/28 17:15–17:45；若不可则 10/29 09:00–09:30）；4）审批链路与风控（数据延迟/异常说明模板）。把选项占位加入主日历并标注缓冲。",
+          "expected_assistant_focus": "确认新的截止时间，提供两条可执行的压缩路径；在主日历中落小时级时间块并避开固定专注与西语课；预定并确认与 CFO 的快速同步；列出审批与风险控制清单；标注与 Teaser 制作块的冲突与调整建议。",
+          "escalation_trigger": "CFO_due_moved_2025-10-29"
+        },
+        {
+          "turn_id": "U50",
+          "thread_id": "T-dog_health",
+          "timestamp_hint": "周日早间",
+          "user_message": "Mocha 今早有轻度胃肠不适（呕吐 1 次、食欲下降），我担心周日徒步不合适。请在 GreenPaws Vet 紧急预约 10/26（周日）上午评估，优先 09:30–10:15 或 10:45–11:30；若无号给同日下午。并请：1）把周日 09:00 Lands End 徒步取消并通知同行（如有）；2）给居家护理临时方案（禁食时长/补水/观察指标），以及是否需要带粪便样本；3）与 Walker Leo 协调 10/26 当天改为轻松短程遛弯或取消；4）预算预估（急诊/常规就诊、药费）。把就诊与照护时间块加入主日历，并加 09:00 每日用药提醒核对。",
+          "expected_assistant_focus": "尽快锁定 Vet 紧急号并提供就诊备选时段；取消徒步并更新主日历；输出居家护理与携带材料建议；与 Leo 协调当日遛弯调整；给出费用范围并设置提醒。",
+          "escalation_trigger": "Dog_GI_urgent_2025-10-26"
+        },
+        {
+          "turn_id": "U51",
+          "thread_id": "T-social_weekend",
+          "timestamp_hint": "周六晚",
+          "user_message": "周六晚餐请确认并锁定：我倾向于保留 Luna Bistro 改 20:30。请确认订位（4 人，Jess & Omar 另加朋友可能 1 人，灵活），备注靠窗或室外优先；并评估与当日下午场地参观（Seacliff Gardens）结束后的衔接：建议从 18:30–19:00 结束参观→前往停车→20:00 到店等位。若 Luna 不理想，请给备选 3 家（步行或短途驾车），但以 Luna 为首选。请用 U17 的短信草案模板，微调发给 Jess & Omar（包含时间、着装随意、停车建议、若我临时被工作占用的 10–15 分钟迟到说明）。把最终订位与缓冲加入主日历并标注预算走向（本次社交预算 $150）。",
+          "expected_assistant_focus": "确认 Luna Bistro 20:30 订位并加入主日历；评估与场地参观的衔接与交通；列出同级备选餐厅；生成并优化给 Jess & Omar 的短信草案；标注预算使用情况。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U52",
+          "thread_id": "T-car_maintenance",
+          "timestamp_hint": "周一傍晚",
+          "user_message": "Bay AutoCare 刚回电说刹车零件要到 10/27（周一）才能到库，原本 11/05–11/07 的安排可能需前移或保持。请做 SPLIT：A 10/27（周一）16:30 出发→17:00–18:30 快速更换与检查（如需可隔日复检）；B 维持 11/07（周五）09:00–11:00。两方案请评估：1）对 10/27–10/29 Q3 报告压缩节奏的影响；2）是否需要代步车或 Lyft 往返（费用/时长）；3）与 11/06 圣何塞医疗日的车辆状态保障。请把候选预约+通勤缓冲加入主日历，并在 10/26 晚加一个“车辆零件到库确认”10 分钟提醒。",
+          "expected_assistant_focus": "与 Bay AutoCare 确认零件到库与档期；提供两条时间方案并评估对工作与医疗行程的影响；列出代步与出行备选及预算；在主日历添加占位与提醒。",
+          "escalation_trigger": "Brake_parts_delay_2025-10-27"
+        },
+        {
+          "turn_id": "U53",
+          "thread_id": "T-parents_health",
+          "timestamp_hint": "下周与次周",
+          "user_message": "最新从 Kaiser 得知：爸爸 Ravi（泌尿）专科最早只能约到 11/12（周三），上午时段。请做 SPLIT：A 保持妈妈 Lila 心内 11/06 上午（原计划）→爸爸改 11/12 09:30–10:15；B 两人都改到 11/12 同日“背靠背”（优先 09:30 心内 + 10:30 泌尿或反过来）。两方案请：1）列各自当天 SF↔SJ 往返与就诊时间块并加入主日历；2）MERGE(T-parents_health, T-car_maintenance, T-dog_health)：分别给 11/06 与 11/12 的车辆可用性/后备交通与 Mocha 09:00 用药与中午照护安排；3）核对是否需转诊/化验单提前准备；4）提示低钠午餐备选。",
+          "expected_assistant_focus": "确认 11/12 爸爸泌尿专科可行时段并给两套安排；生成 11/06 与 11/12 的一日行程与交通；合并车务与狗狗照护计划；检查转诊/化验要求；提供低钠午餐选择并落主日历。",
+          "escalation_trigger": "Dad_specialist_delay_2025-11-12"
+        },
+        {
+          "turn_id": "U54",
+          "thread_id": "T-renovation",
+          "timestamp_hint": "本周内沟通",
+          "user_message": "预算突发变动：厨房装修预算须从 $15,000 下调到 $12,000（因医疗支出）。请发起 SPLIT 方案并给清晰取舍：A 保留台面与后挡水瓷砖升级，改为中档材料，取消柜体全换，仅做五金与抽屉滑轨优化；B 保留柜体局部更换（高频区），降级台面材料与简化瓷砖样式。两方案请：1）按材料/人工/应急预备金列出预算分解与风险缓冲；2）与 11/10 开工（或顺延）以及“早晨施工窗口减少”的承包方约束对齐；3）对电器送货/暂存与临时厨房（预封门/临时台面/一次性餐具/备用水）安排；4）把高噪/停水软占位更新到主日历并尽量避开 11/08–11/09 父母来访。",
+          "expected_assistant_focus": "提供两个明确的降本方案与取舍；输出详细预算分解与风险缓冲；对齐开工日期与施工时段限制；安排电器送货与临时厨房措施；更新主日历的高噪/停水软占位并避开父母来访。",
+          "escalation_trigger": "Renovation_budget_cut_$3000"
+        },
+        {
+          "turn_id": "U55",
+          "thread_id": "T-investing",
+          "timestamp_hint": "本周财务窗口",
+          "user_message": "为应对医疗与装修预算下调，请给 11 月现金流缓冲方案：SPLIT A 暂停 11 月 DCA $1,500（VTI/VXUS/BND）并动用现金储备 $3,000；SPLIT B 维持 DCA，但在应税账户卖出 VTI $2,000 + BND $1,000（注意税务与手续费），或考虑赎回部分 I-Bonds（若罚息可接受）。两方案请：1）列税务影响与机会成本；2）对 2025Q4–2026 投资目标的影响；3）与装修款支付节奏的对齐（里程碑付款时间）。给一个推荐路径并在预算台账里反映。",
+          "expected_assistant_focus": "评估两套现金流方案的税务与收益影响；说明对长期目标的影响；对齐装修付款节奏；给出推荐并更新预算与投资台账。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U56",
+          "thread_id": "T-workB_report",
+          "timestamp_hint": "10/27–10/28",
+          "user_message": "基于 10/29 截止，请列我需要今天（10/27）与明天（10/28）优先完成的素材清单与数据拉取：1）KPI 列表与阈值说明；2）Tableau 截图位点；3）异常案例的注释草稿；4）审批人（Dana、Trevor）的预读包。请把 10/27–10/29 的“收尾/核对”微块更新为每天两次（11:15–11:30、16:30–16:45），并预定 10/28 12:15–12:45 与 CFO Trevor 快速同步，备选 17:15–17:45。若需要，我可在 10/27 晚 20:30–22:00 加班。请检查与西语课的冲突并给具体挪动建议。",
+          "expected_assistant_focus": "输出两天的优先素材清单；在主日历添加每日两次核对微块；预约与 CFO 的快速同步；评估与西语课冲突并建议挪动或替代时间；标注晚间加班占位与缓冲。",
+          "escalation_trigger": "CFO_due_moved_2025-10-29"
+        },
+        {
+          "turn_id": "U57",
+          "thread_id": "T-social_weekend",
+          "timestamp_hint": "周日全天",
+          "user_message": "鉴于 Mocha 状态不稳，周日请不安排外出活动。除已取消的徒步外，请建议一个室内或近家低强度备选（如不出门则留白也可），并在主日历上标注“Mocha 观察休息”与我/Alex 的家庭时间。若 Jess & Omar 有周日咖啡意向，请代我婉拒并说明狗狗不适，顺便再确认周六晚餐的最终人数（是否 +1）。",
+          "expected_assistant_focus": "将周日改为留白或轻度居家活动并更新主日历；准备给朋友的婉拒消息；再次确认周六晚餐人数与订位细节；确保与其他线程无冲突。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U58",
+          "thread_id": "T-dog_health",
+          "timestamp_hint": "周日晚后",
+          "user_message": "Vet 评估完成后（10/26），请：1）把医生建议与新药物/饮食调整记录到 Mocha 的健康档案；2）在 10/27–10/31 每天 09:00 保持用药提醒，并在 10/28 与 10/31 各安排 5 分钟“症状回访记录”；3）如需复诊，优先 10/29 或 10/30 上午短窗（避开 08:00–10:00）。同时与 Walker Leo 协调下周一/三/五 12:00 的遛弯改为轻度。",
+          "expected_assistant_focus": "整理并归档兽医建议；设置用药与症状回访提醒；预留复诊短窗并避开工作专注块；与 Leo 调整下周遛弯强度与备注。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U59",
+          "thread_id": "T-renovation",
+          "timestamp_hint": "11/10 当周",
+          "user_message": "承包方刚补充：11/10 当周早晨（08:00–11:00）施工窗口有限，仅能安排下午与傍晚。请做 SPLIT 时间路径：A 保持 11/10 开工，但将主要高噪工序安排在 13:30–17:30（必要时 18:30–20:00）并与我工作与语言课避让；B 开工顺延到 11/12，全日 09:30–17:30，以减少晚间施工。两方案请：1）评估与父母 11/08–11/09 来访、11/06 医疗日的衔接；2）电器送货与暂存的改期（如需）；3）对预算与风险的影响；4）把高噪/停水软占位更新到主日历。",
+          "expected_assistant_focus": "与承包方对齐施工时段限制；提供两条时间路径并评估对来访与医疗日的影响；必要时改期电器送货与暂存；更新主日历并说明预算与风险变化。",
+          "escalation_trigger": "Contractor_morning_reduced_2025-11-10_week"
+        },
+        {
+          "turn_id": "U60",
+          "thread_id": "T-workB_report",
+          "timestamp_hint": "周一出炉",
+          "user_message": "请输出 2025-10-27 至 11-02 的“全量周计划（更新版）”，发起 MERGE(T-workB_report, T-social_weekend, T-car_maintenance, T-dog_health, T-parents_health, T-renovation, T-language)：1）硬约束：Q3 报告 10/29 截止、08:00–10:00 专注块、西语课、已确认的预约（Mocha 10/26 Vet、车辆检修候选、父母就诊变更）；2）软约束：周末社交与厨房打包；3）冲突与调整建议（例如把 10/27 车辆检修改次选或压缩、Teaser 制作块晚间处理、周日留白）。请用小时级别列出，并突出预算/里程碑变动（装修预算下调与投资现金流缓冲）。给我推荐路径并把选定占位加入主日历。",
+          "expected_assistant_focus": "整合多线程形成 10/27–11/02 的小时级周计划；优先满足硬约束，灵活调整软约束；标注冲突并给出明确调整建议；反映预算与里程碑变化；给出推荐路径并在主日历落地。",
+          "escalation_trigger": "Integrated_replan_required"
+        },
+        {
+          "turn_id": "U61",
+          "thread_id": "T-fitness",
+          "timestamp_hint": "周一早晨（10/27）",
+          "user_message": "我这两天（10/27–10/29）有轻微感冒（喉咙痒/轻咳，体温正常），请把训练改成低强度，发起 SPLIT：A 完全休息 + 每天 10–15 分钟轻度拉伸/呼吸（06:30–06:45）；B 区域 2 慢走 20–30 分 + 轻度核心激活，避免出汗过多（07:00–07:30）。两方案都请：1）把 10/27–10/29 的晨间块 06:30–07:30 更新；2）对 Turkey Trot 5K 周期的节奏调整（本周速度课延期/周末恢复跑的里程）；3）向 Trainer Maya 发个更新与注意事项（避免高强度/室外冷风）；4）若体征好转，10/30 恢复轻跑的安全阈值。把选项以软占位加入主日历，并标注我可在前一晚根据状态确认。",
+          "expected_assistant_focus": "提出两套低强度替代训练路径、更新主日历晨间时间块、对 5K 周期进行再基线、与 Trainer Maya 同步健康与训练调整、明确 10/30 安全恢复阈值并检查与工作/西语课的冲突。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U62",
+          "thread_id": "T-language",
+          "timestamp_hint": "周二晚（10/28）",
+          "user_message": "10/28 周二西语课（20:00–20:45）我可能嗓子不舒服，请发起 SPLIT：A 改为异步作业（Duolingo + Carla 留作业语音改为文字/听力）；B 改期到 10/31 周五 20:00–20:45 或 11/01 周六 10:00–10:45（二选一）。请：1）与 Tutor Carla 沟通并保留本周四 10/30 课不变但降低口语强度；2）在主日历上占位与缓冲；3）给我异步练习清单（15–20 分钟/天，10/27–10/29）。",
+          "expected_assistant_focus": "与 Carla 协商改为异步或改期备选并确认、生成 10/27–10/29 的轻负担练习清单、在主日历添加占位与缓冲、校验与其他晚间任务冲突。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U63",
+          "thread_id": "T-workA_launch",
+          "timestamp_hint": "11/11–11/13",
+          "user_message": "电力公司通知 11/12（周三）09:00–13:00 家中停电，可能影响彩排/资产制作。我还新增了 11/13（周四）10:00 投资人 Demo。请 MERGE(T-workA_launch) 与 Teaser 制作与资源协调，重新排彩排路径，发起 SPLIT：A 11/11（周二）14:00–16:30 全员彩排 #1 + 资产冻结清单；11/12 14:00–16:30 家中恢复供电后做彩排 #2；11/13 08:15–09:30 快速走台；B 11/10（周一）16:00–18:00 彩排 #1 + 11/11 16:00–18:00 彩排 #2，11/12 仅做线下素材微调（无设备依赖），11/13 08:30–09:30 走台。两方案都请：1）发出 Nora、Samir、Ivy 的会议邀请与会议室/备选 WeWork（避免家中停电）；2）列需前置完成的资产与依赖（Demo 数据/环境/脚本/视频）；3）标注与我 08:00–10:00 专注块、西语课的避让；4）若 11/12 停电波及装修，请同步提醒承包方。",
+          "expected_assistant_focus": "基于停电与新增 Demo 重新编排彩排路径并给出两套可行方案、发送核心团队邀请与锁定场地、列出资产前置清单与依赖、检查与专注块/西语课冲突、同步可能影响到装修方的提醒。",
+          "escalation_trigger": "PowerOutage-11-12;InvestorDemo-11-13"
+        },
+        {
+          "turn_id": "U64",
+          "thread_id": "T-dog_health",
+          "timestamp_hint": "11/03 中午",
+          "user_message": "Walker Leo 11/03–11/07 当周无法出勤，请帮我找临时备选。发起 SPLIT：A 通过 Rover/Wag 找 2–3 名有中型犬经验、可 12:00–12:45 中午遛弯的候选（含报价、保险、背景审核、可试走）；B 我方临时调整：Mon/Wed/Fri 改为我或 Alex 11:45–12:15 快速遛 + Tue/Thu 预订一次性服务。请：1）与小区门禁/钥匙交接安排；2）同步 Mocha 的 09:00 用药与胃肠恢复注意事项；3）把 11/03–11/07 的占位与缓冲加入主日历。",
+          "expected_assistant_focus": "搜罗并比对临时遛狗候选（资质、报价、可用性）、提出自助与外部服务混合备选、安排钥匙与门禁交接、在主日历落地 11/03–11/07 遛弯占位、对接 Mocha 用药与健康注意事项。",
+          "escalation_trigger": "Walker-Unavailable-11-03"
+        },
+        {
+          "turn_id": "U65",
+          "thread_id": "T-parents_health",
+          "timestamp_hint": "11/12 上午",
+          "user_message": "爸妈希望两人 11/12（周三）同日就诊，请按“背靠背”安排并核对与我行程及停电情况。建议路径：09:30–10:15 妈妈 Lila 心内；10:30–11:15 爸爸 Ravi 泌尿（均为 Kaiser SJ）。请：1）预留 SF→SJ 驾车 1 小时 20 分（08:00 出发），与午餐低钠选（12:00–12:45）；2）MERGE(T-parents_health, T-dog_health, T-car_maintenance)：Mocha 09:00 用药与中午看护、车辆状态与后备交通；3）确认是否需要携带既往化验单/转诊单；4）在主日历落地并提示 11/12 09:00–13:00 家中停电我将不在家，必要时安排家中设备断电保护。",
+          "expected_assistant_focus": "与 Kaiser 协调并确认两人同日背靠背时段、制定 SF↔SJ 行程与低钠午餐安排、合并狗狗用药与车辆可用性检查、在主日历落地并备注停电期间家中防护与我不在家的情况。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U66",
+          "thread_id": "T-investing",
+          "timestamp_hint": "本周（10/27–11/03）",
+          "user_message": "市场刚跌约 4%，我想本周先暂停新增买入并评估保护策略。请发起 SPLIT（三路径）：A 不动作：暂停 10/27–11/03 的 DCA，新买单暂缓一周，维持配置；B 部分再平衡：在应税账户卖出 VTI 5–10%（约 $2k–$4k）转入 BND 或现金，提高防御；C 对冲：以 SPY 或 VTI 购买少量 12 月到期的保护性看跌期权（或卖出备兑看涨），控制成本。三方案都请：1）给风险/成本/税务对比与执行步骤；2）与 U55 的 11 月现金流缓冲方案对齐；3）提出触发条件（例如再跌 2%、或反弹 1.5% 解除对冲）；4）草拟下单与止损/到期回合提醒。",
+          "expected_assistant_focus": "输出三路径 SPLIT 方案含税务/风险/成本对比与具体执行步骤、与 11 月现金流缓冲对齐、设定量化触发条件与提醒、维护投资台账与主日历上的关键动作占位。",
+          "escalation_trigger": "MarketDip-4pct"
+        },
+        {
+          "turn_id": "U67",
+          "thread_id": "T-wedding",
+          "timestamp_hint": "11/09 下午",
+          "user_message": "新增“婚礼蛋糕试吃”：11/09（周日）14:00。爸妈那周末（11/08–11/09）会在 SF，装修也在准备期。请：1）给我三家 SF 区信誉好的蛋糕店可选（若我未指定，先软占位一家 11/09 14:00），预算 $150–$250；2）MERGE(T-wedding, T-renovation, T-parents_health)：安排当天动线（家→蛋糕店→与爸妈晚餐），避开家中可能的收纳/打包；3）给店家沟通要点（来宾数 ~120，口味偏好、低糖选项）；4）把预约/缓冲加入主日历并同步给 Alex。",
+          "expected_assistant_focus": "推荐并初步锁定蛋糕店试吃时段、与装修准备和爸妈来访的行程做 MERGE、草拟与店家的沟通要点、在主日历添加试吃与交通缓冲并同步给 Alex、追踪预算。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U68",
+          "thread_id": "T-workA_launch",
+          "timestamp_hint": "11/13 早上",
+          "user_message": "确认 11/13（周四）10:00 投资人 Demo 加入主计划。请输出 Run-of-Show 草案并把关键资产前置到 11/11（周二）18:00 完成：1）Demo 环境（后端/前端版本、数据种子）；2）讲稿与时间线（10 分钟），含 Q&A；3）Teaser 预览链接与新 Logo；4）演示设备/网络（若我家 11/12 停电影响，改用办公室/WeWork）。同时：发出邀请（Nora、Samir、Ivy + 投资人名单），并在主日历加入走台与缓冲。",
+          "expected_assistant_focus": "生成投资人 Demo 的 Run-of-Show、明确资产前置清单和截止时间、锁定场地与设备网络备份、通知核心与外部参会人、在主日历安排走台与缓冲并检查与其他事项冲突。",
+          "escalation_trigger": "InvestorDemo-11-13"
+        },
+        {
+          "turn_id": "U69",
+          "thread_id": "T-language",
+          "timestamp_hint": "10/27–10/29 午后",
+          "user_message": "在我感冒期间（10/27–10/29），请给“低声负担”的西语异步练习清单：- Duolingo 每天 15 分钟（听力/选择题为主）；- 词汇复盘（100–150 个基础动词/短语，Anki 或 Google Sheet）；- 简短阅读（2 段新闻，标注 5 个新词）。并：1）请 Carla 把周二作业改为文字反馈；2）给我 10/27–10/29 的提醒块（午后 15:00–15:20）。",
+          "expected_assistant_focus": "制定低声负担的异步练习内容与提醒、与 Carla 确认作业反馈形式调整、将练习占位加入主日历并避免与工作块冲突。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U70",
+          "thread_id": "T-fitness",
+          "timestamp_hint": "10/30 早晨",
+          "user_message": "如果 10/30 我状态恢复，请给“安全恢复”微周期：10/30 06:45–07:30 轻跑 20–25 分 + 伸展；10/31 06:30–07:15 区域 2 走跑交替；11/02 周日 08:30–09:15 轻松跑，跳过速度课。请：1）把 Turkey Trot 周期重新基线（把超强度移到 11/05 以后）；2）与 Q3 报告收尾/审批避让；3）告知 Trainer Maya 并收集她的调整建议。",
+          "expected_assistant_focus": "制定恢复期微周期、调整 Turkey Trot 周期强度安排、在主日历落地并避开报告收尾、与 Trainer Maya 确认并获取反馈。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U71",
+          "thread_id": "T-workA_launch",
+          "timestamp_hint": "10/28 下午",
+          "user_message": "请生成“综合风险登记册（版本 0.1）”，发起 MERGE(T-workA_launch, T-renovation, T-parents_health, T-dog_health, T-investing, T-language, T-fitness)：1）逐项列风险/影响/概率/触发条件/缓解措施/负责人/到期；2）必须包含：11/12 停电、11/13 Demo 资产前置、装修预算压缩与开工窗口、爸妈 11/12 就诊与交通、Mocha 胃肠恢复与 11/03–11/07 替代遛弯、市场回撤与投资动作、西语课程改期、Turkey Trot 训练调整；3）输出一个建议优先级列表（高/中/低）与下周检查节奏。把登记册链接入主计划并在 10/28 17:00 前给我初稿。",
+          "expected_assistant_focus": "跨线程 MERGE 风险清单并结构化登记（影响、概率、触发、缓解、负责人、到期），设定优先级与检查节奏、链接到主计划并保证 10/28 17:00 提交初稿。",
+          "escalation_trigger": "RiskRegister-Init"
+        },
+        {
+          "turn_id": "U72",
+          "thread_id": "T-dog_health",
+          "timestamp_hint": "10/29–10/30 早晨",
+          "user_message": "Mocha 疫苗原定约 10/28 到期（或需更新），考虑到这两天胃肠不适，请发起 SPLIT：A 若 Vet 建议可照常接种，则安排 10/29 或 10/30 早窗短访（避开 08:00–10:00）；B 推迟到 11/04–11/05，并与临时遛弯安排/用药记录对齐。请：1）向 GreenPaws 咨询并拿到书面建议；2）把占位加入主日历；3）预算估算与必要携带物品（卡、疫苗记录、粪便样本是否需要）。",
+          "expected_assistant_focus": "与 GreenPaws 沟通并获取书面建议、给出两套接种/延期方案并落地预约占位、对接用药与遛弯安排、提供预算与携带物品清单、检查与工作/专注块冲突。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U73",
+          "thread_id": "T-dog_health",
+          "timestamp_hint": "11/04 全天",
+          "user_message": "GreenPaws 建议 11/04（周二）做 Mocha 洁牙（需空腹、全日留院）。请直接预约：07:30 交接，预计 16:00 接回；术前确认是否需要血检/术后止痛药。并：1）把 11/04 09:00 日常用药是否可少量水送服向 Vet 确认（若不宜则改至当晚 19:00）；2）Leo 本周缺席，安排中午看护/信息回报：A 我或 Alex 12:15–12:30 给 Vet 电话确认进展；B 若需额外观察，晚间 20:00–20:15 复查牙龈与进食；3）MERGE(T-dog_health, T-car_maintenance, T-parents_health)：整体统筹 11/04–11/06 的交通与时间窗，避免与 11/06 RAV4 召回与 11/12 爸妈就诊冲突；4）在主日历落地：出发/缓冲、交接与接回、术后护理提醒；5）预算预估（洁牙 + 血检/麻醉/药品），并和本月宠物支出汇总对齐。",
+          "expected_assistant_focus": "与 GreenPaws 确认并锁定 11/04 洁牙档期与术前/术后要求；校准 09:00 用药可否及替代时间；在主日历创建交接、接回、术后观察提醒与缓冲；MERGE 与车辆召回及父母就诊的交通/时间以避免冲突；提供费用估算并更新宠物支出台账；安排中午进展电话与晚间复查提醒。",
+          "escalation_trigger": "vet_dental_fast_daystay"
+        },
+        {
+          "turn_id": "U74",
+          "thread_id": "T-car_maintenance",
+          "timestamp_hint": "11/06 上午或下午",
+          "user_message": "我收到丰田燃油泵召回，想 11/06（周四）处理，需 3–4 小时。请发起 SPLIT：A 08:30 在授权丰田经销商（请你选离我家近的）送修，申请免费 Loaner；B 13:00 在 Bay AutoCare 或经销商送修，无 Loaner，安排 Lyft/Uber 往返。两方案都请：1）确认 Bay AutoCare 是否可执行召回或必须走经销商；2）检查是否合并当次机油+刹车保养，评估总时长与是否延长至 4–5 小时；3）MERGE(T-car_maintenance, T-parents_health, T-dog_health)：标注与 11/04 Mocha 洁牙接送、11/12 SJ 就诊行程的交通与车辆可用性；4）加上主日历占位与缓冲；5）告诉我需要携带的车辆文件。",
+          "expected_assistant_focus": "核实召回必须由授权经销商执行还是 Bay AutoCare 可办；给出两个时间路径与是否能申请 Loaner；评估是否合并机油+刹车保养并给出总时长与成本影响；MERGE 与 11/04 洁牙和 11/12 SJ 就诊的交通与车辆资源；在主日历软占位 11/06 的服务窗口与缓冲；列出需携带的车辆登记/保险等文件。",
+          "escalation_trigger": "toyota_recall_immediate"
+        },
+        {
+          "turn_id": "U75",
+          "thread_id": "T-parents_health",
+          "timestamp_hint": "本周内确认",
+          "user_message": "考虑到 11/04 洁牙与 11/06 召回，我担心 11/12（周三）爸妈背靠背就诊会与我工作/交通压力叠加。请发起 SPLIT：A 保持 11/12 SJ 现场就诊，时间微调为：妈妈 Lila 09:45–10:30、爸爸 Ravi 10:45–11:30（便于停车与签到）；B 妈妈改为 11/12 09:45 远程心内 Telehealth（Kaiser），爸爸移至 11/14（周五）11:00 现场泌尿就诊。两方案都请：1）核实名额与医生可用性（优先原医生），以及 Telehealth 的设备/网络要求；2）MERGE(T-parents_health, T-car_maintenance, T-dog_health)：给我 SF↔SJ 驾车或替代交通方案，避开 11/06 车辆占用与 11/04 我需接回 Mocha；3）准备就诊资料清单（既往化验/转诊/用药），以及低钠午餐选项；4）把方案 A/B 的行程软占位到主日历并标注我可在 11/01 前最终确认。",
+          "expected_assistant_focus": "与 Kaiser 预约与确认医生档期，明确 Telehealth 要求；提供两套时程并在主日历软占位；MERGE 与车辆召回/狗洁牙的交通与时间，提出 SF↔SJ 的驾车或替代交通预案；准备就诊材料清单与低钠午餐备选；设置 11/01 前确认的提醒。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U76",
+          "thread_id": "T-workA_launch",
+          "timestamp_hint": "本周调整",
+          "user_message": "营销这边把最终发布视频的截止提前到 11/08（周六）。请更新 Nimbus 2.0 资产时间线并发起快速重排：1）新增里程碑：脚本锁定 11/05 18:00、拍摄/剪辑初版 11/07 15:00、最终交付 11/08 18:00；2）与 Ivy 对齐素材与法务审阅窗口（不超过 24 小时），避免周末人员不可用；3）把视频与 Demo 讲稿的依赖关系并入 MERGE(T-workA_launch)：统一到 Investor Demo（11/13）前的资产冻结；4）加上彩排与走台占位，不与我 08:00–10:00 专注块、西语课冲突；5）风险登记册更新这一加速项，并给我可恢复方案（视频延期/替代动画）。",
+          "expected_assistant_focus": "重排资产甘特与里程碑；与 Ivy/法务确认审阅窗口并在日历占位；将视频与 Demo 讲稿依赖纳入统一时间线并设置冻结点；安排彩排/走台避免与我固定块冲突；更新风险登记册并产出备选方案；群发相关会议邀请与提醒。",
+          "escalation_trigger": "video_deadline_moved"
+        },
+        {
+          "turn_id": "U77",
+          "thread_id": "T-workB_report",
+          "timestamp_hint": "10/29–10/31",
+          "user_message": "Q3 报告需要在本周末前冲刺收尾。请：1）安排 10/30（周四）15:00–16:00 与 CFO Trevor 的数据核对会，10/31（周五）10:00–10:45 与 Dana 的审阅会；2）提前在主日历加入数据拉取与 Tableau 刷新窗口（10/29 下午 14:00–16:00），避开我的 08:00–10:00 专注块与西语安排；3）列出未决数据源与依赖（财务、市场、产品使用），并标注风险；4）若出现数据延迟，发起 SPLIT：A 精简版先行提交；B 延至 11/01 上午并告知理由。",
+          "expected_assistant_focus": "创建与发送 Trevor/Dana 的会议邀请；在主日历安排 10/29 数据拉取/刷新窗口并避让我固定时段；汇总数据依赖与风险；准备延迟应对的两条路径与通知模板；设置里程碑提醒与共享文档链接。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U78",
+          "thread_id": "T-renovation",
+          "timestamp_hint": "11/01–11/03",
+          "user_message": "厨房装修这边确认定金为总预算的 50%，我计划在 11/03（周一）前完成支付。请：1）与 Oak&Nail 索取正式发票与支付方式（电汇/支票），金额预计 $7,500；2）MERGE(T-renovation, T-investing)：核对我应税账户/现金是否能在 11/01–11/03 之间结算到位（避免资金在途），必要时从现金预备金挪用；3）标注目标开工窗口（早 11 月，尽量避开我 11/04–11/06 的外出/送修/接狗），并确认许可/订料状态；4）把付款与开工软占位加到主日历，并更新装修预算台账。",
+          "expected_assistant_focus": "向 Oak&Nail 索取发票与支付细节并锁定 11/03 前付款；MERGE 与投资线程确认资金结算/可用余额与备选现金方案；规划开工窗口避开 11/04–11/06 的事务并检查许可与订料进度；在主日历软占位付款与开工；更新装修预算与台账。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U79",
+          "thread_id": "T-social_weekend",
+          "timestamp_hint": "10/26 晚间",
+          "user_message": "如果周六安排过满，请把周末聚餐改到 10/26（周日）19:00，在 Luna Bistro（先软订 4 人桌）。请：1）通知 Jess & Omar 并收集可否；2）控制预算 ≤ $150（含税小费），提前看菜单并给我两套点菜建议；3）在主日历加入往返与缓冲；4）若当晚我状态不佳，SPLIT：A 改为 20:00 甜点/茶；B 顺延到 11/02 晚上。",
+          "expected_assistant_focus": "与 Jess & Omar 协调时间并发送软订通知；预订 Luna Bistro 19:00 4 人桌；提供两套菜单建议与预算控制；在主日历添加行程与缓冲；准备两种备用计划（甜点/茶或顺延）并设置确认期限。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U80",
+          "thread_id": "T-dog_health",
+          "timestamp_hint": "11/04–11/05",
+          "user_message": "关于疫苗与洁牙的搭配：我不希望同日进行。请：1）与 GreenPaws 确认疫苗改到 11/05（周三）11:30 的短访（避开 08:00–10:00），若 Vet 建议再延几天也可；2）明确 11/04 早晨 09:00 的常规用药是否需跳过或改时（术后当晚 19:00 补服是否可行）；3）术前是否需要血检与术后软食/止痛药清单；4）在主日历加入 11/05 的就诊、费用估算与携带物品提示（卡、疫苗记录、是否需要粪便样本）。",
+          "expected_assistant_focus": "与 Vet 确认疫苗改约时间与是否需延后；明确 11/04 术前用药与术后补服的医学建议；列出术前检查与术后护理清单；在主日历安排 11/05 访视与携带物品提醒并估算费用；与 11/04 洁牙安排相互避让。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U81",
+          "thread_id": "T-car_maintenance",
+          "timestamp_hint": "11/06 + 备选保养日",
+          "user_message": "在 11/06 召回服务上，请再给我两条路径并评估成本/时长：SPLIT：A 将机油+刹车保养与召合并同日一次性完成（预计 4–5 小时），申请 Loaner；B 只做召回（3–4 小时），机油+刹车另约 11/15 前（避开发布期）。两方案都请：1）检查零件到货与经销商档期，避免二次往返；2）在主日历上加占位，标注我可在 11/02 前定稿；3）与 11/12 SJ 行程及 11/04 洁牙接送做冲突检查；4）若无 Loaner，准备 Lyft/Uber 代码。",
+          "expected_assistant_focus": "提供合并与分拆两方案的时长/成本与风险对比；确认零件到货与可用档期；在主日历软占位并设置 11/02 决策提醒；检查与 11/04/11/12 的冲突；准备交通替代（Lyft/Uber 代码）与可能的 Loaner 申请。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U82",
+          "thread_id": "T-parents_health",
+          "timestamp_hint": "11/12 与 11/14",
+          "user_message": "基于目前排程，我倾向方案 B（妈妈 11/12 Telehealth、爸爸改 11/14 现场）。请你先尝试锁定这两个时段。如果不可用，回退到方案 A 并把时间按医生建议微调。另请：1）准备就诊资料包（PDF/打印），含近期化验、药物清单、问题清单；2）制定 11/12 当日的 SF→SJ 替代方案（若车在维修或无法使用），含 WeWork/办公室网络以供 Telehealth；3）低钠午餐备选两家（SJ 附近），并在主日历落地。",
+          "expected_assistant_focus": "优先预约 11/12 妈妈 Telehealth 与 11/14 爸爸现场时段并发送确认；若不可约，回退到 11/12 现场背靠背方案并微调时间；准备就诊资料包供打印与移动端查看；制定交通与网络备选方案（车不可用时）并放入日历；筛选并预订 SJ 低钠午餐选项。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U83",
+          "thread_id": "T-workA_launch",
+          "timestamp_hint": "11/01–11/16",
+          "user_message": "请输出 11/01–11/16 的一体化甘特视图（MERGE：T-workA_launch, T-workB_report, T-renovation, T-dog_health, T-car_maintenance, T-parents_health, T-social_weekend），包含：1）关键节点：11/03 装修定金、11/04 Mocha 洁牙、11/05 疫苗、11/06 RAV4 召回、11/08 最终发布视频、11/11–11/12 彩排与素材微调、11/13 Investor Demo、11/14 爸爸就诊；2）每项的占位与缓冲、交通与地点（SF/SJ/经销商/GreenPaws/办公室/WeWork）；3）冲突与资源（车辆/我与 Alex 分工/网络）告警；4）给我三条优化建议（例如把保养拆分到 11/15 以后、用 Lyft 替换某些段、在 11/08 前置素材审核）。",
+          "expected_assistant_focus": "生成跨线程的甘特图并在主日历映射关键节点与缓冲；标注地点与交通时长；输出冲突与资源占用告警；提出三条优化建议并评估对发布与家庭安排的影响；设置里程碑提醒与负责人分配。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U84",
+          "thread_id": "T-social_weekend",
+          "timestamp_hint": "周五前确认",
+          "user_message": "请把 10/26 周日晚的变更确认给 Jess & Omar，并在短信里注明：我这周工作/家务排期紧密，所以改到周日 19:00；若他们不便，优先改到 11/02（周日）19:00。也请：1）保留 Luna Bistro 的软订并在周五前确认；2）把预算提醒与交通（地铁/步行）加入主日历；3）如果当天我感冒未愈，请提前备选户外散步 + 热饮计划。",
+          "expected_assistant_focus": "与朋友确认改期并设定备选 11/02；保留并在截止日前确认餐厅订位；在主日历添加预算提醒与交通安排；准备健康友好型备选（户外散步+热饮）并在当天前确认。",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U85",
+          "thread_id": "T-workA_launch",
+          "timestamp_hint": null,
+          "user_message": "收官总表：请输出 2025-10-27 至 2025-11-16 的一体化执行计划（MERGE：T-workA_launch, T-workB_report, T-renovation, T-parents_health, T-dog_health, T-car_maintenance, T-social_weekend, T-language, T-fitness, T-wedding, T-investing），要求：1）逐日结构化时间线，固定块：工作专注 08:00–10:00、健身 06:30–07:30（工作日）、西语 Tue/Thu 20:00–20:45；2）纳入关键节点与缓冲/地点/交通：10/26 周日 Luna Bistro（如保留）、10/29 14:00–16:00 数据拉取、10/30 15:00–16:00 CFO Trevor、10/31 10:00–10:45 Dana、11/03 装修定金、11/04 Mocha 洁牙（07:30 交接/16:00 接回 + 术后护理）、11/05 11:30 疫苗、11/06 RAV4 召回（含保养占位的两案）、11/08 视频最终、11/11–11/12 彩排/素材微调（避免西语/专注块冲突）、11/12 妈妈 Telehealth（09:45）、11/13 Investor Demo、11/14 爸爸就诊（11:00）、11/15 保养备选；3）车辆可用性/Loaner/替代交通（Lyft/Uber/地铁）与 SF↔SJ 驾车时长；4）我与 Alex 的分工与站位（例如 11/04 接回 Mocha、11/06 送修/取车的替代）；5）显式冲突检查与资源告警（人力/车辆/网络），标注软占位/硬占位；6）给 3–5 条优化建议（如保养拆分至 11/15 后、素材法务前置 ≤24h、Investor Demo 前 24h 禁改动）；7）输出可导出的 ICS 草案（单一主日历）。",
+          "expected_assistant_focus": "生成跨线程的整合时间线与资源计划；逐项检查冲突（专注块、语言课、交通、车辆占用）；将所有关键节点落地为主日历软/硬占位；提出优化建议并准备 ICS 导出文件；确保与已有承诺一致。",
+          "escalation_trigger": "FINAL_SYNTHESIS"
+        },
+        {
+          "turn_id": "U86",
+          "thread_id": "T-investing",
+          "timestamp_hint": "本周中午",
+          "user_message": "请做 2025-10-27 至 2025-11-16 的总预算滚动台账与现金计划（MERGE：T-investing, T-renovation, T-dog_health, T-car_maintenance, T-social_weekend, T-language, T-wedding, T-workA_launch）：1）汇总各线程支出/变动：装修预算 $15,000（定金 $7,500 需在 11/03 前到账）、Mocha 洁牙+术前血检/麻醉/止痛药（给出估算范围并标注不与疫苗同日）、11/05 疫苗小额、RAV4 召回免费但机油+刹车保养费用区间、可能的 WeWork/交通开销、社交 ≤$150、语言课 $35/次（按 Tue/Thu 频次）、健身零额但如需团课/次卡请标注、婚礼前期零星开销；2）现金流曲线与可用现金/应税账户的腾挪节奏：在 11/01–11/03 前确保定金着账，如需临时使用现金预备金或暂停/下调 11 月 DCA $1,500（部分或全部），请给方案；3）拟定卖出/转账批次（VTI/VXUS/BND 或不动）与日期/结算时间，避免资金在途；4）给出预算差异与缓冲（5–10% 风险备付），并标注对后续两周工作/家庭优先级不受影响；5）输出更新后的主台账与短消息摘要供我确认。",
+          "expected_assistant_focus": "整合各线程支出到主台账，计算现金流与可用余额；评估是否需暂缓 DCA；明确卖出/转账的时间窗与结算风险；给出现实的费用估算与差异说明；产出简明预算摘要与确认点。",
+          "escalation_trigger": "BUDGET_RECONCILE"
+        },
+        {
+          "turn_id": "U87",
+          "thread_id": "T-parents_health",
+          "timestamp_hint": null,
+          "user_message": "按偏好锁定方案 B：妈妈 Lila 11/12（周三）09:45 心内 Telehealth（Kaiser），爸爸 Ravi 11/14（周五）11:00 SJ 现场泌尿就诊。请：1）与原医生团队确认两个时段是否可保留，若任一不可用则回退方案 A 并给出最优微调时间；2）准备 Telehealth 技术核对清单（网络/设备/备用地点：办公室或 WeWork），以及当天 SF→SJ 替代交通预案（若车辆在维保）；3）整理就诊资料包（近期化验/药物/问题清单）并生成可打印 PDF；4）SJ 附近低钠午餐备选两家并加到主日历；5）把方案 B 的行程硬/软占位到主日历并在备注中标注我 11/01 前最后确认；6）输出给爸妈的短信/邮件模板（含时间、准备事项、视频诊连线方式）。",
+          "expected_assistant_focus": "与 Kaiser 确认可用性并锁时段；准备 Telehealth 技术与场地备选；制作就诊资料包与饮食备选；落实主日历占位；拟定与爸妈的清晰沟通模板并注明确认截止日；同步交通方案与车辆可用性。",
+          "escalation_trigger": "HEALTH_SCHED_LOCK"
+        },
+        {
+          "turn_id": "U88",
+          "thread_id": "T-car_maintenance",
+          "timestamp_hint": null,
+          "user_message": "召回与保养最终敲定：请输出 SPLIT 对比并给推荐——A：11/06（周四）同日完成召回 + 机油/刹车（4–5 小时，申请免费 Loaner）；B：11/06 仅做召回（3–4 小时），机油/刹车拆分到 11/15（周六）或之后。两案都请：1）确认授权经销商档期与零件到货、Bay AutoCare 是否能做召回（如不能则只走经销商）；2）Loaner 可行性与替代 Lyft/Uber 抵扣码；3）与 11/04 洁牙接送、11/05 疫苗、11/12 Telehealth、11/13 Demo 的冲突检查与缓冲；4）主日历软占位并标注我可在 11/02 前拍板；5）携带车辆文件清单。另请输出跨线程 Top 5 风险应对手册（MERGE）：视频素材/法务超时、Mocha 术后延时观察、召回延长/无 Loaner、Telehealth 技术失败、装修定金资金延迟。每条给触发条件、即时动作、替代时间窗、沟通人清单（Ivy/Dana/Trevor/Oak&Nail/GreenPaws/家人/我与 Alex 分工）。",
+          "expected_assistant_focus": "完成召回/保养两案的可行性核验与推荐，明确档期、Loaner与替代交通；对关键日期做冲突检查并占位。编制跨线程风险手册，列触发、应对步骤、重排窗口与沟通路径；在主日历与备忘中同步。",
+          "escalation_trigger": "RISK_PLAYBOOK"
+        },
+        {
+          "turn_id": "U89",
+          "thread_id": "T-wedding",
+          "timestamp_hint": null,
+          "user_message": "请草拟多对象沟通模板包（MERGE：所有相关线程），供我直接发送：1）爸妈：11/12/11/14 就诊与餐食安排；2）Alex：本周期分工与关键备援（车/接送/看护 Mocha）；3）Dana/CFO Trevor：Q3 报告里程碑与风险缓解、11/08 视频加速对资源的影响；4）Jess & Omar：10/26 周日 19:00 Luna Bistro 的最终确认，若不便则优先 11/02 周日 19:00；5）Oak&Nail：正式发票与 11/03 定金支付、开工视窗与许可/订料状态；6）Bay AutoCare/经销商：11/06 召回/保养档期与 Loaner 请求；7）GreenPaws：11/04 洁牙术前/术后与 11/05 疫苗确认；8）Trainer Maya：10/27–11/16 的晨练安排与我不可用日期；9）Tutor Carla：Tue/Thu 20:00–20:45 固定，遇到 11/06/11/13 如需微调的备选时段。每封请包含：主题、简明要点、时间/地点、预算或发票信息（如适用）、我的行动项与对方行动项、语气注意（工作/家庭/朋友/供应商各异）。",
+          "expected_assistant_focus": "为各关键关系方撰写定制化模板，准确嵌入时间、地点、预算与行动项；区分语气与优先级；确保信息与主日历一致；为Tutor/Trainer预留备选时段建议；准备即可复制发送的文本版本。",
+          "escalation_trigger": "COMMS_TEMPLATES"
+        },
+        {
+          "turn_id": "U90",
+          "thread_id": "T-workA_launch",
+          "timestamp_hint": null,
+          "user_message": "请列出目前所有尚待决的 SPLIT 并给推荐与截止时间：1）车：11/06 同日保养合并 vs 拆分到 11/15 后；2）父母：若方案 B 任一不可用则回退 A 的具体时段；3）Q3 报告：A 精简版先行 vs B 延至 11/01 上午；4）社交：10/26 vs 11/02；5）保养是否挪到发布期后；6）装修开工具体日（早 11 月的首选/备选）。随后发起最终 MERGE：按推荐先行在主日历与预算台账落地（软/硬占位清晰），并生成 ICS 草案。最后再跑一遍全局冲突检查（人力/车辆/网络/预算），给我一个“可以一键确认”的版本与需我拍板的最少清单。",
+          "expected_assistant_focus": "汇总并评估所有待决 SPLIT，给出清晰的推荐与拍板截止；执行最终 MERGE，将选项落地到主日历与台账并生成 ICS；做全局冲突与资源检查，输出极简的确认清单。",
+          "escalation_trigger": "FINAL_MERGE_SIGNOFF"
+        }
+      ],
+      "evaluation_rubric": [
+        {
+          "criterion": "Memory Fidelity & Thread Consistency",
+          "description": "Accurately retains and updates all thread-specific facts, constraints, and decisions across 90 turns. Carries forward changes (e.g., Q3 deadline moved to 10/29, Teaser moved to 11/01, video final due 11/08, renovation start shift to 11/10, renovation budget down to $12k, parents’ plan B: 11/12 Telehealth + 11/14 onsite, Mocha dental 11/04 then vaccine 11/05, RAV4 recall 11/06) and reflects them consistently in calendar, budgets, and follow-up actions. Uses correct entities, time windows, and maintains merged thread state (e.g., fitness+dog, workA+workB, renovation+parents).",
+          "weight": 0.24
+        },
+        {
+          "criterion": "Conflict Detection, Calendar Orchestration & Buffering",
+          "description": "Proactively identifies conflicts and capacity overloads (e.g., 10/25 Saturday stack), proposes viable SPLIT alternatives with precise timing, and places hard/soft blocks with realistic buffers (e.g., gym commute 10–15 min, Bay AutoCare 25–35 min, SF↔SJ 60–90 min). Ensures hard constraints are never violated (08:00–10:00 focus blocks, 09:00 dog meds, Tue/Thu 20:00–20:45 Spanish) and integrates travel, parking, check-in/out, and contingency time. Calendar shows no double-bookings and includes alerts/reminders.",
+          "weight": 0.24
+        },
+        {
+          "criterion": "Dependency & Risk Management (Branch Control: MERGE/SPLIT)",
+          "description": "Uses MERGE to synthesize cross-thread plans (e.g., workA+workB, renovation+parents, fitness+dog) and SPLIT to present actionable alternatives with trade-offs. Sequences dependent tasks correctly (e.g., asset freeze before 11/13 Investor Demo, dental before vaccine on separate days, deposit before renovation start, recall vs vehicle availability for medical trips). Maintains a risk register with triggers, owners, mitigations (e.g., 11/12 power outage, video acceleration, data delays) and updates it when timelines shift.",
+          "weight": 0.2
+        },
+        {
+          "criterion": "Responsiveness & Decisiveness Under Pressure",
+          "description": "Rapidly adapts to disruptions (deadline pulls-in, vendor delays, health emergencies, power outage) with concise, prioritized plans. Provides clear recommended paths among SPLIT options, labels soft vs hard holds, and outputs immediate next actions (invites, bookings, confirmations). Avoids unnecessary verbosity while preserving decision-critical details and delivers ICS-ready calendar updates when requested.",
+          "weight": 0.18
+        },
+        {
+          "criterion": "Resource & Budget Tracking Accuracy",
+          "description": "Maintains a correct rolling budget ledger across threads (investing, renovation, pet care, car, social, language), including the renovation budget change to $12k, deposit $7,500 due by 11/03, pet procedure estimates, car service costs, and social/language spend. Aligns cash availability (DCA pauses/adjustments, BND/VTI lot sales) to ensure deposit settlement without breaching $8–9k emergency reserve. Produces transaction reminders, dates, and avoids funds-in-transit conflicts.",
+          "weight": 0.14
+        }
+      ],
+      "notes": {
+        "multi_turn_requirements": [
+          "Rebaseline Q3 report to 10/29 final: add daily micro-blocks, schedule CFO Trevor quick sync (10/28), Dana review path, and publish a compressed execution plan.",
+          "Confirm Teaser campaign acceleration (11/01) and video final (11/08): create hour-level asset timeline, owners (Ivy/Nora/Samir/User), and place evening/weekend production blocks with approvals and legal review windows.",
+          "Lock car plan by 11/02: confirm 11/06 recall (dealer vs Bay AutoCare), loaner availability, and whether to combine oil/brake or split to 11/15+; add calendar + buffers.",
+          "Finalize parents’ appointments: 11/12 Telehealth for Lila, 11/14 Ravi onsite; assemble medical packet, telehealth tech checks, SF↔SJ transport backup, and low-sodium lunch options.",
+          "Pet health sequencing: confirm Mocha dental 11/04 (AM drop/PM pickup), vaccine 11/05 late morning, daily 09:00 meds reminders, and Walker Leo replacements for 11/03–11/07; add symptom check-in blocks.",
+          "Renovation financing and start: obtain Oak&Nail invoice, ensure $7,500 deposit arrives by 11/03, reconcile budget cut to $12k, coordinate appliance delivery and start date (11/10 or alternative), place high-noise/utility shutdown windows.",
+          "Weekend social adjustments: confirm 10/26 or 11/02 dinner (Luna or alternatives), send Jess & Omar messages, and update calendar per pet health and work load.",
+          "Language cadence: manage Tue/Thu 20:00–20:45 classes; handle 10/28 reschedule/async, insert light practice windows, and avoid conflicts with work and production blocks.",
+          "Fitness adjustments: apply low-intensity plan 10/27–10/29 due to illness; set safe recovery micro-cycle 10/30 onward; coordinate fitness+dog morning routine and update Trainer Maya.",
+          "Produce ICS drafts and a master calendar overview (10/27–11/16): integrate locations, travel buffers, hard/soft constraints, and push final selections after SPLIT decisions.",
+          "Maintain and deliver a risk register v0.1 by 10/28 17:00: include outage, video acceleration, data delays, pet recovery, car recall/loaner, renovation funding/start, investment market moves."
+        ],
+        "expected_failure_modes": [
+          "Forgetting or mis-propagating critical date changes (e.g., Q3 deadline shift to 10/29, Teaser to 11/01, video final 11/08, renovation start to 11/10).",
+          "Scheduling overlaps that violate hard constraints (08:00–10:00 focus, 09:00 dog meds, Spanish Tue/Thu 20:00–20:45), or missing required buffers for travel, parking, and check-in.",
+          "Incorrect dependency handling: booking vaccine same day as dental, failing to freeze assets before Investor Demo, missing deposit before renovation start, or ignoring 11/12 power outage for Telehealth.",
+          "Thread mixing or entity confusion: contacting wrong vendor, mislabeling threads in MERGE/SPLIT, or losing continuity in merged plans (fitness+dog, workA+workB).",
+          "Weak conflict resolution: vague or non-actionable SPLIT options, missing recommended path, or not placing soft/hard calendar holds with clear next steps.",
+          "Budget/ledger errors: failing to reflect $12k renovation cap, not ensuring $7,500 deposit funding by 11/03, breaching emergency reserve, or conflicting trades with DCA/lot sales timing.",
+          "Failure to secure resources: not confirming loaner availability, neglecting Walker Leo replacements, or missing appointment confirmations (parents, Vet, dealership).",
+          "Neglecting to update health records and reminders after Mocha’s vet visits, or not adjusting fitness/language plans due to illness.",
+          "Missing ICS/master calendar output or producing entries without locations, buffers, or clear soft/hard status.",
+          "Inadequate responsiveness under pressure: delays in adapting to new constraints (e.g., CFO accelerating deadline), overly verbose or indecisive responses."
+        ]
+      }
+    }
+  ]
+}
