@@ -255,10 +255,13 @@ class AzureLLM:
         *,
         model: Optional[str] = None,
         json_mode: bool = False,
+        generation_kwargs: Optional[Dict[str, Any]] = None,
         telemetry: Optional[Callable[[Dict[str, Any]], None]] = None,
     ) -> str:
         request_model = model or self.default_model
         kwargs: Dict[str, Any] = {"model": request_model, "messages": list(messages)}
+        if generation_kwargs:
+            kwargs.update(generation_kwargs)
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
 
