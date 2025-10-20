@@ -178,8 +178,8 @@ def parse_args() -> argparse.Namespace:
     # Baseline knobs
     parser.add_argument("--baseline-model", default=None)
     parser.add_argument("--baseline-summarizer-model", default=None)
-    parser.add_argument("--baseline-window-turns", type=int, default=6)
-    parser.add_argument("--baseline-summary-trigger", type=int, default=4)
+    parser.add_argument("--baseline-window-turns", type=int, default=12)
+    parser.add_argument("--baseline-summary-trigger", type=int, default=10)
     parser.add_argument(
         "--baseline-system-prompt",
         default="You are a diligent assistant using only the recent conversation and provided summaries.",
@@ -239,11 +239,14 @@ def aggregate_branchmind(records: List[Dict[str, Any]]) -> Dict[str, Any]:
         (item.get("tree_snapshot", {}).get("max_depth", 0) for item in records if item.get("tree_snapshot")),
         default=0,
     )
-    total_nodes = max(
-        (item.get("tree_snapshot", {}).get("total_nodes", 0) for item in records if item.get("tree_snapshot")),
-        default=0,
-    )
-    base.update({"max_tree_depth": max_depth, "final_node_count": total_nodes})
+    final_node_count = 0
+    for item in reversed(records):
+        snapshot = item.get("tree_snapshot") or {}
+        nodes = snapshot.get("total_nodes")
+        if isinstance(nodes, (int, float)):
+            final_node_count = int(nodes)
+            break
+    base.update({"max_tree_depth": max_depth, "final_node_count": final_node_count})
     return base
 
 

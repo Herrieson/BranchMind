@@ -176,6 +176,7 @@ class TreeDecision:
     context_branches: List[str] = field(default_factory=list)
     archive_targets: List[str] = field(default_factory=list)
     note: str = ""
+    requires_final_synthesis: bool = False
 
     @classmethod
     def from_raw(cls, raw: Dict[str, Any], root_id: str) -> "TreeDecision":
@@ -211,6 +212,18 @@ class TreeDecision:
         if target_parent == "root":
             target_parent = root_id
 
+        def _normalize_bool(key: str) -> bool:
+            value = raw.get(key)
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                lowered = value.strip().lower()
+                if lowered in {"true", "1", "yes", "y"}:
+                    return True
+                if lowered in {"false", "0", "no", "n"}:
+                    return False
+            return False
+
         return cls(
             operation=op,
             primary_branch=primary,
@@ -219,6 +232,7 @@ class TreeDecision:
             context_branches=_normalize_list("context_branches"),
             archive_targets=_normalize_list("archive_targets"),
             note=raw.get("note", ""),
+            requires_final_synthesis=_normalize_bool("requires_final_synthesis"),
         )
 
 
@@ -280,6 +294,7 @@ class ContextTree:
         self.nodes: Dict[str, Node] = {"root": self.root}
         self.children_map: Dict[str, List[str]] = {}
         self.operation_log: List[Dict[str, Any]] = []
+        self.snapshots: Dict[str, Dict[str, str]] = {}
 
     # --- Persistence ------------------------------------------------------------------
     def to_dict(self) -> Dict[str, Any]:
@@ -288,6 +303,7 @@ class ContextTree:
             "nodes": {node_id: node.to_dict() for node_id, node in self.nodes.items()},
             "children_map": self.children_map,
             "operation_log": self.operation_log,
+            "snapshots": self.snapshots,
         }
 
     @classmethod
@@ -320,6 +336,11 @@ class ContextTree:
                     tree.children_map[node.parent_id].append(node.id)
 
         tree.operation_log = list(payload.get("operation_log", []))
+        tree.snapshots = {
+            key: value
+            for key, value in payload.get("snapshots", {}).items()
+            if isinstance(value, dict)
+        }
         return tree
 
     @classmethod
@@ -453,6 +474,14 @@ class ContextTree:
                 queue.append(child)
         return descendants
 
+    def _node_depth(self, node_id: str) -> int:
+        depth = 0
+        current = self.nodes.get(node_id)
+        while current and current.parent_id:
+            depth += 1
+            current = self.nodes.get(current.parent_id)
+        return depth
+
     def archive_branch(self, branch_id: str) -> None:
         for node_id in {branch_id} | self._descendants(branch_id):
             if node_id in self.nodes:
@@ -502,6 +531,35 @@ class ContextTree:
             if node_id in active_leaves:
                 return node_id
         return None
+
+    def _recent_active_leaves(self) -> List[str]:
+        active = self.get_active_branches()
+        if not active:
+            return []
+        ordered: List[str] = []
+        seen: Set[str] = set()
+        for entry in reversed(self.operation_log):
+            node_id = str(entry.get("node_id", ""))
+            if node_id in active and node_id not in seen:
+                ordered.append(node_id)
+                seen.add(node_id)
+        for node_id in active:
+            if node_id not in seen:
+                ordered.append(node_id)
+        return ordered
+
+    def _suggest_merge_secondaries(self, primary: str, limit: int = 3) -> List[str]:
+        suggestions: List[str] = []
+        for candidate in self._recent_active_leaves():
+            if candidate == primary:
+                continue
+            node = self.nodes.get(candidate)
+            if not node or node.status != "active":
+                continue
+            suggestions.append(candidate)
+            if len(suggestions) >= limit:
+                break
+        return suggestions
 
     def get_context_bundle(self, branch_ids: List[str]) -> List[Dict[str, str]]:
         """Aggregate context from several branches while keeping provenance visible."""
@@ -598,31 +656,6 @@ class ContextTree:
         else:
             secondary = [b for b in resolved_secondaries if b and b in self.nodes]
 
-        merge_primary_recovered: Optional[str] = None
-        missing_merge_primary = False
-        if operation == TreeOperationType.MERGE and not primary:
-            # Attempt to recover a sensible anchor from secondary branches first.
-            for index, candidate in enumerate(list(secondary)):
-                if candidate and candidate != "root":
-                    primary = candidate
-                    merge_primary_recovered = candidate
-                    secondary.pop(index)
-                    break
-            # Fall back to explicit target parent if provided and usable.
-            if not primary and target_parent and target_parent != "root":
-                recovered = _ensure_exists(target_parent, "target_parent_branch")
-                if recovered and recovered != "root":
-                    primary = recovered
-                    merge_primary_recovered = recovered
-            # As a last resort, reuse the latest active leaf to avoid crashing.
-            if not primary:
-                latest = self.get_latest_active_leaf()
-                if latest and latest != "root":
-                    primary = latest
-                    merge_primary_recovered = latest
-            if not primary:
-                missing_merge_primary = True
-
         context_ids: List[str] = []
         resolved_contexts = [self.resolve_branch_reference(b) for b in decision.context_branches]
         for candidate in [primary, *secondary, *resolved_contexts]:
@@ -643,17 +676,23 @@ class ContextTree:
         split_parent_hint: Optional[str] = None
 
         effective_operation = operation
-        merge_downgrade_reason: Optional[str] = None
+        auto_filled_secondaries: List[str] = []
         if operation == TreeOperationType.MERGE:
             if not primary:
-                if missing_merge_primary:
-                    effective_operation = TreeOperationType.NEW_BRANCH
-                    merge_downgrade_reason = "missing_primary_branch"
+                raise ValueError("Merge operation requires primary_branch as anchor.")
+            if len(secondary) < 1:
+                auto_filled_secondaries = self._suggest_merge_secondaries(primary)
+                if auto_filled_secondaries:
+                    for candidate in auto_filled_secondaries:
+                        if candidate not in secondary:
+                            secondary.append(candidate)
+                            if candidate not in context_ids:
+                                context_ids.append(candidate)
                 else:
-                    raise ValueError("Merge operation requires primary_branch as anchor.")
-            elif len(secondary) < 1:
-                effective_operation = TreeOperationType.APPEND
-                merge_downgrade_reason = "no_secondary_branches"
+                    raise ValueError(
+                        "Merge operation requires at least one secondary branch; "
+                        "controller did not provide any and no active branches are available."
+                    )
 
         if effective_operation == TreeOperationType.NEW_BRANCH:
             parent_id = "root"
@@ -697,12 +736,10 @@ class ContextTree:
         metadata: Dict[str, Any] = {}
         if decision.note:
             metadata["decision_note"] = decision.note
-        if merge_downgrade_reason:
-            metadata["merge_downgraded_reason"] = merge_downgrade_reason
-        if merge_primary_recovered:
-            metadata["merge_primary_recovered"] = merge_primary_recovered
         if effective_operation == TreeOperationType.MERGE:
             metadata["merged_from"] = json.dumps([primary, *secondary], ensure_ascii=False)
+            if auto_filled_secondaries:
+                metadata["auto_secondary_branches"] = auto_filled_secondaries
         if effective_operation == TreeOperationType.SPLIT:
             metadata["split_from"] = primary or ""
             if split_parent_hint:
@@ -717,6 +754,39 @@ class ContextTree:
             archive_targets=[bid for bid in archive_targets if bid],
             metadata=metadata,
         )
+
+    def _classify_snapshots(self, query: str, response: str) -> Dict[str, str]:
+        payload: Dict[str, str] = {}
+        q_lower = query.lower()
+        r_lower = response.lower()
+        if any(keyword in q_lower for keyword in ["主日历", "时间线", "日程", "calendar"]) or any(
+            keyword in r_lower for keyword in ["主日历", "时间线", "日程", "calendar"]
+        ):
+            payload["calendar"] = response
+        if any(keyword in q_lower for keyword in ["预算", "台账", "现金流"]) or any(
+            keyword in r_lower for keyword in ["预算", "台账", "现金流"]
+        ):
+            payload["budget"] = response
+        if "ics" in q_lower or "ics" in r_lower:
+            payload["ics"] = response
+        if any(keyword in q_lower for keyword in ["风险", "冲突"]) or any(
+            keyword in r_lower for keyword in ["风险", "冲突"]
+        ):
+            payload["risk"] = response
+        return payload
+
+    def _update_snapshot(self, category: str, node_id: str, content: str) -> None:
+        snippet = content.strip()
+        if len(snippet) > 2000:
+            snippet = snippet[:2000] + " ..."
+        self.snapshots[category] = {"node_id": node_id, "content": snippet}
+
+    def _should_flag_autosplit(self, branch_id: Optional[str]) -> bool:
+        if not branch_id or branch_id not in self.nodes or branch_id == "root":
+            return False
+        tag_count = len(self._collect_tags(branch_id))
+        depth = self._node_depth(branch_id)
+        return tag_count >= 8 or depth >= 4
 
     def commit_operation(
         self,
@@ -766,6 +836,16 @@ class ContextTree:
 
         self.add_node(new_node)
 
+        for category, content in self._classify_snapshots(query, response).items():
+            self._update_snapshot(category, new_node.id, content)
+
+        if plan.operation == TreeOperationType.APPEND and self._should_flag_autosplit(plan.parent_id):
+            branch_id = plan.parent_id
+            overload_message = (
+                f"分支 ...{branch_id[-6:]} 标签/深度已过载，请优先执行 SPLIT 或重组。"
+            )
+            self._update_snapshot("autosplit", branch_id, overload_message)
+
         for branch_id in plan.archive_targets:
             self.archive_branch(branch_id)
 
@@ -778,6 +858,22 @@ class ContextTree:
             }
         )
         return new_node
+
+    def get_snapshot_messages(self, categories: Optional[List[str]] = None) -> List[Dict[str, str]]:
+        messages: List[Dict[str, str]] = []
+        if categories is None:
+            items = self.snapshots.items()
+        else:
+            items = ((category, self.snapshots.get(category)) for category in categories)
+        for category, payload in items:
+            if not payload:
+                continue
+            content = payload.get("content", "")
+            if not content:
+                continue
+            label = category.upper()
+            messages.append({"role": "system", "content": f"[Snapshot:{label}] {content}"})
+        return messages
 
     # --- Diagnostics ------------------------------------------------------------------
     def display_tree(self) -> None:
@@ -809,6 +905,25 @@ class ContextTree:
 
 # --- 3. Dialogue manager ---------------------------------------------------------------
 class DialogueManager:
+    FINAL_CHECKLIST_FIELDS = [
+        "integrated_summary",
+        "action_plan",
+        "resource_alignment",
+        "risks",
+        "open_questions",
+    ]
+    FINAL_CHECKLIST_LABELS = {
+        "integrated_summary": "integrated summary",
+        "action_plan": "action plan",
+        "resource_alignment": "resource alignment",
+        "risks": "risk coverage",
+        "open_questions": "open questions",
+    }
+    FINAL_CHECKLIST_PATTERN = re.compile(
+        r"FinalChecklist\s*:?\s*```json\s*({.*?})\s*```",
+        re.IGNORECASE | re.DOTALL,
+    )
+
     def __init__(self, config: AppConfig, observer: Optional[DialogueObserver] = None):
         self.config = config
         self.client = AzureOpenAI(
@@ -820,6 +935,7 @@ class DialogueManager:
         self.retry_delay = max(0.0, config.retry_delay)
         self.tree = self._load_state() or ContextTree()
         self.observer = observer
+        self._pending_operation: Optional[TreeDecision] = None
         print("对话管理器已启动。根节点已创建。")
         if self.config.state_path:
             print(f"状态文件: {self.config.state_path.resolve()}")
@@ -926,6 +1042,76 @@ class DialogueManager:
             note="fallback: create new branch",
         )
 
+    def _requires_final_synthesis(self, _query: str, decision: TreeDecision) -> bool:
+        return (
+            decision.operation == TreeOperationType.MERGE
+            and decision.requires_final_synthesis
+        )
+
+    @classmethod
+    def _parse_final_checklist(cls, text: str) -> Optional[Dict[str, str]]:
+        match = cls.FINAL_CHECKLIST_PATTERN.search(text)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(1))
+        except json.JSONDecodeError:
+            return None
+
+        checklist: Dict[str, str] = {}
+        for field in cls.FINAL_CHECKLIST_FIELDS:
+            value = data.get(field, "")
+            if isinstance(value, str):
+                normalized = value.strip().lower()
+            elif isinstance(value, bool):
+                normalized = "done" if value else "missing"
+            else:
+                normalized = str(value).strip().lower()
+            checklist[field] = normalized
+        return checklist
+
+    @staticmethod
+    def _final_synthesis_guardrail() -> str:
+        return (
+            "【终局综合指引】请生成一份已经汇总所有上下文的最终答复，满足以下要求：\n"
+            "1. 给出合并后的整体概览与关键背景。\n"
+            "2. 列出可执行的行动计划（包括时间或责任人，如有）。\n"
+            "3. 说明资源/依赖的落实情况，并指出缺口。\n"
+            "4. 识别主要风险及缓解方案。\n"
+            "5. 总结仍待确认或待决的问题。\n"
+            "在回答末尾添加标题 `FinalChecklist` 并紧随一个 JSON 代码块，字段取值只能是 \"done\" 或 \"missing\"：\n"
+            "```json\n"
+            "{\n"
+            '  "integrated_summary": "done",\n'
+            '  "action_plan": "done",\n'
+            '  "resource_alignment": "missing",\n'
+            '  "risks": "done",\n'
+            '  "open_questions": "missing"\n'
+            "}\n"
+            "```\n"
+            "若任何信息不足，请在主体中说明并在 JSON 中标记为 \"missing\"。"
+        )
+
+    def _evaluate_final_response(self, text: str) -> List[str]:
+        checklist = self._parse_final_checklist(text)
+        if checklist is None:
+            return ["FinalChecklist JSON 缺失或无法解析"]
+
+        missing: List[str] = []
+        for field in self.FINAL_CHECKLIST_FIELDS:
+            status = checklist.get(field, "")
+            if status != "done":
+                missing.append(self.FINAL_CHECKLIST_LABELS.get(field, field))
+        return missing
+
+    @staticmethod
+    def _final_synthesis_retry_prompt(missing: List[str]) -> str:
+        checklist = "、".join(missing)
+        return (
+            "【终局补充提醒】刚才的输出未满足以下检查项："
+            f"{checklist}。请完善主体内容，并保证回答末尾提供结构化的 FinalChecklist JSON。"
+        )
+
     def llm_cm_decide(self, query: str) -> TreeDecision:
         active_branches = self.tree.get_active_branches()
         branch_full_paths = {
@@ -950,6 +1136,8 @@ class DialogueManager:
 4. "split"    —— 如果某个分支主题过载，先记录分支，再从其父节点开启一个新的子分支；如有需要，可指定更早的祖先或 root 作为新节点的父节点。
 5. "archive"  —— 将若干旧分支标记为归档，不再参与后续决策，但回答当前问题时仍可引用。
 
+如果用户期望的是一次终局性合并（需要严格的终局检查/一体化交付），请将 `requires_final_synthesis` 设置为 true，否则为 false。
+
 请输出严格的 JSON：
 {{
   "operation": "new" | "append" | "merge" | "split" | "archive",
@@ -958,9 +1146,11 @@ class DialogueManager:
   "secondary_branches": ["<被merge或split参考的分支ID>", ...],
   "context_branches": ["<需要参与上下文聚合的分支ID>", ...],
   "archive_targets": ["<需要立即归档的分支ID>", ...],
- "note": "用于人类调试的简短说明"
+  "requires_final_synthesis": true | false,
+  "note": "用于人类调试的简短说明"
 }}
 其中 target_parent_branch 必须是 primary_branch 的祖先（或 "root"），若无需覆盖请填写 null。
+若选择 "merge"，primary_branch 必须填写一个非 null 的活跃分支 ID，且该分支将作为合并锚点。
 
 当前活跃分支的摘要路径：
 {json.dumps(branch_full_paths, indent=2, ensure_ascii=False)}
@@ -980,7 +1170,20 @@ class DialogueManager:
                 messages, model=self.config.cm_model, json_mode=True, phase="controller"
             )
             decision_payload = json.loads(raw_decision)
-            return TreeDecision.from_raw(decision_payload, self.tree.root.id)
+            decision = TreeDecision.from_raw(decision_payload, self.tree.root.id)
+            if decision.operation == TreeOperationType.MERGE and not decision.primary_branch:
+                fallback_anchor = self.tree.get_latest_active_leaf()
+                if fallback_anchor:
+                    print(
+                        f"⚠️ 控制模型未提供 merge 主分支，自动使用最新活跃分支 '...{fallback_anchor[-6:]}' 作为锚点。"
+                    )
+                    decision.primary_branch = fallback_anchor
+                else:
+                    print(
+                        "⚠️ 控制模型返回 merge 但没有可用的主分支，已改为在 root 下创建新分支。"
+                    )
+                    decision.operation = TreeOperationType.NEW_BRANCH
+            return decision
         except Exception as exc:
             print(f"⚠️ 控制模型决策失败，将使用回退策略：{exc}")
             return self._default_decision()
@@ -1014,16 +1217,53 @@ class DialogueManager:
         decision = self.llm_cm_decide(query)
         print(f"🧠 LLM-CM 决策: {decision}")
 
-        plan = self.tree.plan_operation(decision)
+        if decision.operation in (TreeOperationType.MERGE, TreeOperationType.SPLIT):
+            self._pending_operation = decision
+        else:
+            self._pending_operation = None
+
+        try:
+            plan = self.tree.plan_operation(decision)
+        except ValueError as exc:
+            print(f"⚠️ 规划失败，将退回默认策略：{exc}")
+            fallback_decision = self._default_decision()
+            plan = self.tree.plan_operation(fallback_decision)
+            decision = fallback_decision
+            self._pending_operation = None
+
         print(f"   └─ 规划结果：operation={plan.operation.value}, parent=...{plan.parent_id[-6:]}")
         if self.observer:
             self.observer.on_decision(decision, plan)
 
-        context_messages = self.tree.get_context_bundle(plan.context_branch_ids)
+        base_context_messages = self.tree.get_context_bundle(plan.context_branch_ids)
         print(f"📚 聚合上下文分支数量: {len(plan.context_branch_ids)}")
+
+        requires_final = self._requires_final_synthesis(query, decision)
+        guardrail_prompt: Optional[str] = None
+        snapshot_messages: List[Dict[str, str]] = []
+        if requires_final:
+            snapshot_messages = self.tree.get_snapshot_messages()
+            guardrail_prompt = self._final_synthesis_guardrail()
+            context_messages = [{"role": "system", "content": guardrail_prompt}]
+            context_messages.extend(snapshot_messages)
+            context_messages.extend(base_context_messages)
+        else:
+            context_messages = list(base_context_messages)
 
         print("🚀 正在调用 LLM-Task 生成回复...")
         response = self.llm_task_execute(query, context_messages)
+
+        if requires_final:
+            missing = self._evaluate_final_response(response)
+            if missing:
+                print(f"⚠️ 终局检查缺项：{', '.join(missing)}，将触发补充生成。")
+                retry_prompt = self._final_synthesis_retry_prompt(missing)
+                retry_context = [{"role": "system", "content": retry_prompt}]
+                if guardrail_prompt:
+                    retry_context.append({"role": "system", "content": guardrail_prompt})
+                retry_context.extend(snapshot_messages)
+                retry_context.extend(base_context_messages)
+                response = self.llm_task_execute(query, retry_context)
 
         print("📝 正在生成交互摘要...")
         summary = self._summarize_interaction(query, response)
@@ -1047,6 +1287,7 @@ class DialogueManager:
         self.tree.display_tree()
         self.save_state()
         print("=" * 60 + "\n")
+        self._pending_operation = None
         return response
 
 
@@ -1078,5 +1319,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-# 一些鲁棒性修复

@@ -4,7 +4,7 @@ import math
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parents[2]))
@@ -25,11 +25,10 @@ from benchmarks.stress.run_stress_suite import (
     SUPPORTED_ASSISTANTS,
 )
 
-
-USER_CONTENT_CHAR_LIMIT = 500
-ASSISTANT_CONTENT_CHAR_LIMIT = 900
-EXPECTED_FOCUS_CHAR_LIMIT = 400
-CONTROLLER_NOTE_CHAR_LIMIT = 300
+USER_CONTENT_CHAR_LIMIT: Optional[int] = None
+ASSISTANT_CONTENT_CHAR_LIMIT: Optional[int] = None
+EXPECTED_FOCUS_CHAR_LIMIT: Optional[int] = None
+CONTROLLER_NOTE_CHAR_LIMIT: Optional[int] = None
 
 
 @dataclass(frozen=True)
@@ -241,13 +240,45 @@ def sanitize_transcript(transcript_payload: Dict) -> Dict:
     }
     turns: List[Dict[str, Any]] = []
     for turn in transcript_payload.get("turns", []):
-        trimmed = {k: v for k, v in turn.items() if k != "meta"}
-        role = trimmed.get("role")
-        if "content" in trimmed and isinstance(trimmed["content"], str):
-            limit = _content_limit_for_role(role)
-            trimmed["content"] = _truncate_content(trimmed["content"], limit)
-        turns.append(trimmed)
+        entry: Dict[str, Any] = {}
+        role = turn.get("role")
+        if isinstance(role, str):
+            entry["role"] = role
+        content = turn.get("content")
+        if isinstance(content, str):
+            limit = _content_limit_for_role(role if isinstance(role, str) else None)
+            entry["content"] = _truncate_content(content, limit)
+        meta = turn.get("meta")
+        sanitized_meta = _sanitize_meta(meta) if isinstance(meta, dict) else {}
+        if sanitized_meta:
+            entry["meta"] = sanitized_meta
+        turns.append(entry)
     sanitized["turns"] = turns
+    return sanitized
+
+
+ALLOWED_META_KEYS: Set[str] = {
+    "turn_id",
+    "thread_id",
+    "expected_assistant_focus",
+    "timestamp_hint",
+    "escalation_trigger",
+    "source",
+}
+
+
+def _sanitize_meta(meta: Dict[str, Any]) -> Dict[str, Any]:
+    sanitized: Dict[str, Any] = {}
+    for key in ALLOWED_META_KEYS:
+        if key not in meta:
+            continue
+        value = meta[key]
+        if isinstance(value, str):
+            cleaned = value.strip()
+            if cleaned:
+                sanitized[key] = cleaned
+        elif value is not None:
+            sanitized[key] = value
     return sanitized
 
 
@@ -260,12 +291,16 @@ def _sanitize_metric_record(payload: Dict, assistant_label: str) -> Dict[str, An
     for key in ("turn_id", "thread_id", "expected_assistant_focus", "escalation_trigger"):
         value = scenario_turn.get(key)
         if value is not None:
-            if key == "expected_assistant_focus" and isinstance(value, str):
-                scenario_snapshot[key] = _truncate_content(value, EXPECTED_FOCUS_CHAR_LIMIT)
-            else:
-                scenario_snapshot[key] = value
+            scenario_snapshot[key] = value
     if scenario_snapshot:
         record["scenario_turn"] = scenario_snapshot
+
+    latency = payload.get("latency")
+    if latency is not None:
+        record["latency"] = latency
+    total_tokens = payload.get("total_tokens")
+    if total_tokens is not None:
+        record["total_tokens"] = total_tokens
 
     if assistant_label == ASSISTANT_BRANCHMIND:
         controller_decision = payload.get("controller_decision")
@@ -283,8 +318,8 @@ def _sanitize_metric_record(payload: Dict, assistant_label: str) -> Dict[str, An
                 if value:
                     decision_snapshot[key] = value
             note = controller_decision.get("note")
-            if isinstance(note, str):
-                decision_snapshot["note"] = _truncate_content(note, CONTROLLER_NOTE_CHAR_LIMIT)
+            if isinstance(note, str) and note.strip():
+                decision_snapshot["note"] = note.strip()
             elif note:
                 decision_snapshot["note"] = note
             if decision_snapshot:
@@ -303,13 +338,6 @@ def _sanitize_metric_record(payload: Dict, assistant_label: str) -> Dict[str, An
                 for key in ("total_nodes", "active_nodes", "active_branches", "max_depth", "last_operation")
                 if tree_snapshot.get(key) is not None
             }
-    else:
-        latency = payload.get("latency")
-        if latency is not None:
-            record["latency"] = latency
-        total_tokens = payload.get("total_tokens")
-        if total_tokens is not None:
-            record["total_tokens"] = total_tokens
     return record
 
 

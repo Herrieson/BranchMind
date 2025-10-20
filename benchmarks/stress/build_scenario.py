@@ -171,10 +171,13 @@ class ScenarioBuilder:
                 if self.verbose:
                     print(f"[skip] Chunk {chunk.chunk_id} already satisfied ({generated_turns} turns).")
                 continue
-            if generated_turns + 1 > expected_start:
+
+            next_turn_index = generated_turns + 1
+            if expected_start != next_turn_index:
                 raise RuntimeError(
-                    f"Cannot resume mid-chunk ({chunk.chunk_id}). Existing turns={generated_turns}, "
-                    f"chunk expected start={expected_start}."
+                    f"Chunk {chunk.chunk_id} start mismatch: plan expects turn {expected_start}, "
+                    f"but the next turn should be {next_turn_index}. "
+                    "Regenerate or adjust the plan to maintain sequential coverage."
                 )
             scenario.dialogue.extend(
                 self._generate_chunk(chunk, scenario, len(scenario.dialogue))
@@ -189,6 +192,14 @@ class ScenarioBuilder:
         else:
             if self.verbose:
                 print("[info] Metadata synthesis skipped by flag.")
+
+        target_turns = int(self.plan_payload["generation_plan"].get("target_turns", self.target_turns))
+        minimum_required = max(target_turns, self.target_turns)
+        if len(scenario.dialogue) < minimum_required:
+            raise RuntimeError(
+                f"Scenario only contains {len(scenario.dialogue)} turns but target coverage is {minimum_required}. "
+                "Regenerate missing chunks or update the plan before finalising."
+            )
 
         self._write_final(scenario)
 

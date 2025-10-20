@@ -1,0 +1,603 @@
+{
+  "scenarios": [
+    {
+      "scenario_id": "S-STRESS-CE-001",
+      "title": "Concierge Extreme: Multi-Thread Life Orchestration",
+      "background": "A high-pressure week where a busy professional offloads a large volume of personal and work tasks to an AI concierge. Deadlines, appointments, and logistics collide across many domains, requiring rapid topic switching and careful planning. The user expects proactive conflict detection and cross-topic synthesis.",
+      "user_profile": "Alex Rivera, 34, Boston-based product manager with a tendency to issue rapid-fire, terse instructions. Pragmatic, time-constrained, expects the assistant to remember prior commitments, track budgets, and coordinate across topics without losing context.",
+      "assistant_profile": "An AI concierge with a branching controller that maintains distinct threads, references prior decisions, flags conflicts, and proposes merges/splits explicitly. Produces concise checklists, schedules, and decision frameworks; asks targeted clarifying questions; re-plans quickly on disruptions.",
+      "threads": [
+        {
+          "thread_id": "T-fitness",
+          "intent": "Design and execute a 12-week fitness plan aligned with work and social schedule",
+          "priority": "medium",
+          "key_entities": [
+            "Gym: Downtown Fitness ($69/mo)",
+            "Trainer: Sam (availability M/W/F 6:30–7:30 AM)",
+            "Target: 3x strength + 2x HIIT per week",
+            "Nutrition: 2,000 kcal/day; meal prep Sun",
+            "Equipment: adjustable dumbbells at home"
+          ]
+        },
+        {
+          "thread_id": "T-investment",
+          "intent": "Rebalance portfolio and set DCA plan with tax-loss harvesting options",
+          "priority": "medium",
+          "key_entities": [
+            "Brokerage: Fidelity",
+            "Holdings: VTI, VXUS, BND, TSLA",
+            "Risk: moderate (70/20/10)",
+            "DCA: $1,000/mo on 25th",
+            "Advisor: virtual meeting target Oct 22"
+          ]
+        },
+        {
+          "thread_id": "T-renovation",
+          "intent": "Coordinate kitchen remodel timeline, selections, and deliveries within budget",
+          "priority": "high",
+          "key_entities": [
+            "Contractor: Northstar Renovations (PM: Jenna)",
+            "Budget: $25,000 (10% contingency)",
+            "Demo window: Oct 28–30",
+            "Tile selection due: Oct 21 EOD",
+            "Appliance deliveries: Nov 3–7"
+          ]
+        },
+        {
+          "thread_id": "T-parents",
+          "intent": "Schedule and manage parents’ medical checkups and transportation",
+          "priority": "high",
+          "key_entities": [
+            "Parents: Lina & Raj (live 1 hr away)",
+            "Cardiology: Boston Heart Clinic (Dr. Kim) Oct 24 10:00 AM",
+            "PCP: Riverside Family Medicine (Dr. Patel) Oct 25 1:30 PM",
+            "Insurance forms and med list prep",
+            "Transport: pick-up/drop-off times"
+          ]
+        },
+        {
+          "thread_id": "T-workA",
+          "intent": "Deliver Product Launch (Nimbus v2) milestones on time",
+          "priority": "high",
+          "key_entities": [
+            "Launch date: Nov 12",
+            "Marketing assets due: Oct 21",
+            "Sprint review: Oct 20 3:00 PM",
+            "Stakeholders: Maya (Marketing), Dev Team",
+            "Risk: last-minute copy changes"
+          ]
+        },
+        {
+          "thread_id": "T-workB",
+          "intent": "Prepare quarterly report and board deck",
+          "priority": "high",
+          "key_entities": [
+            "Finance review: Oct 23 2:00 PM",
+            "Board deck draft: Oct 27",
+            "Stakeholders: Evan (CFO), Analytics",
+            "Data pulls: revenue, churn, CAC",
+            "Tooling: Google Slides + Sheets"
+          ]
+        },
+        {
+          "thread_id": "T-language",
+          "intent": "Learn Spanish consistently with live classes and daily practice",
+          "priority": "low",
+          "key_entities": [
+            "Live class: Tue/Thu 7:00–7:45 PM (Tutor: Lucia)",
+            "App: Duolingo + Anki flashcards",
+            "Goal: 30 min/day",
+            "Conversation partner search",
+            "Budget: $150/mo"
+          ]
+        },
+        {
+          "thread_id": "T-dog",
+          "intent": "Maintain dog Milo’s health schedule and care",
+          "priority": "high",
+          "key_entities": [
+            "Dog: Milo, 4-year-old Labrador",
+            "Vet: GreenPaws Clinic; vaccines due Oct 22",
+            "Hip check optional add-on",
+            "Diet: Hill’s Science Diet",
+            "Groomer: next available Oct 26 morning"
+          ]
+        },
+        {
+          "thread_id": "T-weekend",
+          "intent": "Plan weekend social event with minimal conflict and budget adherence",
+          "priority": "medium",
+          "key_entities": [
+            "Dinner party: Sat Oct 26 7–10 PM",
+            "Guests: Sam, Priya, Ben, Chloe, Jordan, Mei, Luis",
+            "Theme: tapas + mocktails",
+            "Budget: $200",
+            "Prep time: 3–4 hours"
+          ]
+        },
+        {
+          "thread_id": "T-car",
+          "intent": "Complete car maintenance and recall with minimal downtime",
+          "priority": "high",
+          "key_entities": [
+            "Car: 2018 Subaru Outback",
+            "Service: Baystate Subaru Oct 21 8:30 AM (loaner requested)",
+            "Tasks: oil change, brake pads, airbag recall",
+            "Budget: $600",
+            "Duration estimate: 4–6 hours"
+          ]
+        },
+        {
+          "thread_id": "T-wedding",
+          "intent": "Advance wedding planning milestones without derailing current week",
+          "priority": "medium",
+          "key_entities": [
+            "Partner: Taylor",
+            "Date: May 10 next year",
+            "Venues: Seaside Loft, Garden Hall, Museum Atrium",
+            "Deposits: Seaside Loft $10k by Nov 1",
+            "Vendor shortlist: photographer, caterer"
+          ]
+        }
+      ],
+      "dialogue": [
+        {
+          "turn_id": "U1",
+          "thread_id": "T-workA",
+          "timestamp_hint": "Mon morning",
+          "user_message": "Kick off Nimbus v2 this week. Confirm marketing assets are due 10/21 EOD with Maya and send me a concise checklist + day-by-day timeline to Launch (11/12). Block a 60-min prep focus on Mon 10/20 10:00–11:00 for sprint review (3:00 PM same day). Flag any conflicts with other holds you see emerging today/tomorrow and propose adjustments.",
+          "expected_assistant_focus": "Confirm the 10/21 marketing asset deadline with Maya, generate a milestone timeline/checklist to 11/12, place a 10:00–11:00 AM prep block on 10/20, check calendar for conflicts, and suggest adjustments while keeping Monday morning otherwise clear.",
+          "escalation_trigger": "deadline_24-48h"
+        },
+        {
+          "turn_id": "U2",
+          "thread_id": "T-car",
+          "timestamp_hint": "Tue early morning",
+          "user_message": "Baystate Subaru service is Tue 10/21 8:30 AM. Please confirm the loaner is reserved, the 4–6 hr duration, and that they’ll handle oil change, brake pads, and airbag recall in one visit. Set SMS updates. If parts delay pushes pickup past 3:30 PM, propose a contingency (keep loaner overnight vs. reschedule) and cost impact. Budget cap $600—flag overruns before authorizing.",
+          "expected_assistant_focus": "Confirm appointment logistics and loaner, scope and duration, set live updates, outline contingency if parts are delayed, and enforce the $600 budget with approval gates.",
+          "escalation_trigger": "time_sensitive"
+        },
+        {
+          "turn_id": "U3",
+          "thread_id": "T-renovation",
+          "timestamp_hint": "Tue midday",
+          "user_message": "Tile selection due by Tue 10/21 EOD. Shortlist 3 options with photos/specs: one budget, one mid, one premium—note price/sq ft, lead time, and style fit. Schedule a 20‑min decision block Tue 12:30–12:50 PM. Share with Jenna ahead of time and confirm it won’t slip the demo window (10/28–10/30).",
+          "expected_assistant_focus": "Produce a three‑option tile shortlist with pros/cons, schedule the 12:30–12:50 PM decision block on 10/21, send materials to Jenna, and confirm timeline impact against demo dates.",
+          "escalation_trigger": "deadline_24-48h"
+        },
+        {
+          "turn_id": "U4",
+          "thread_id": "T-parents",
+          "timestamp_hint": "Fri morning; Sat midday",
+          "user_message": "Lock my parents’ appts: Boston Heart Clinic (Dr. Kim) Fri 10/24 10:00 AM and PCP (Dr. Patel) Sat 10/25 1:30 PM. Plan transport: I’ll pick them up at their home (1 hr away). Propose pickup 8:15 AM Fri for the 10:00 AM cardiology, and 11:45 AM Sat for the 1:30 PM PCP, with return-drop windows and 15–20 min buffers for parking/check‑in. Draft a paperwork checklist (insurance cards, med list, current BP readings), and set reminders to bring everything.",
+          "expected_assistant_focus": "Confirm appointment details, create pickup/drop-off schedules with realistic buffers, generate a documents/medication checklist, and set reminders.",
+          "escalation_trigger": "high_importance"
+        },
+        {
+          "turn_id": "U5",
+          "thread_id": "T-dog",
+          "timestamp_hint": "Wed late morning",
+          "user_message": "Schedule Milo’s vaccines at GreenPaws on Wed 10/22—aim for late morning or lunch. Ask about adding a hip check; if the vet recommends and it’s under $150 extra, include it. Also grab the earliest groomer slot on 10/26 in the morning. Keep me posted if either time collides with other holds.",
+          "expected_assistant_focus": "Book the vaccine appointment on 10/22 late morning/lunch, get guidance/cost on the hip check and add if appropriate, secure 10/26 morning grooming, and check for calendar conflicts.",
+          "escalation_trigger": "time_sensitive"
+        },
+        {
+          "turn_id": "U6",
+          "thread_id": "T-investment",
+          "timestamp_hint": "Wed late afternoon",
+          "user_message": "I want to rebalance at Fidelity to 70/20/10 (US/Intl/Bonds) with TSLA carved out as a satellite. Propose exact tickers/percentages (e.g., VTI/VXUS/BND/TSLA), include tax‑loss harvesting candidates and wash‑sale cautions, and stage trades for minimal slippage. Set DCA of $1,000 on the 25th each month starting this week. Offer advisor times Wed 10/22 late afternoon if needed.",
+          "expected_assistant_focus": "Draft a target allocation with specific tickers/weights including TSLA satellite, identify TLH opportunities and guardrails, set up DCA for the 25th, and propose a Wed 10/22 advisor window.",
+          "escalation_trigger": "medium_deadline"
+        },
+        {
+          "turn_id": "U7",
+          "thread_id": "T-weekend",
+          "timestamp_hint": "Sat afternoon",
+          "user_message": "Dinner party 10/26 7–10 PM, tapas + mocktails, budget $200. Draft the menu (6–8 items with 2 vegetarian), a shopping list with estimated costs, and a 3–4 hr prep timeline day‑of. Call out make‑ahead items I can prep the night before. Create a quick invite message to send to Sam, Priya, Ben, Chloe, Jordan, Mei, and Luis, and set up RSVP tracking.",
+          "expected_assistant_focus": "Produce a budgeted menu and shopping list, create a prep timeline with make‑ahead guidance, draft an invite and RSVP tracker, and ensure plan fits within $200.",
+          "escalation_trigger": "budget_cap"
+        },
+        {
+          "turn_id": "U8",
+          "thread_id": "T-fitness",
+          "timestamp_hint": "Wed/Fri early morning; Tue/Thu lunch",
+          "user_message": "Outline a 12‑week plan (3x strength + 2x HIIT/week) aligned to my schedule. This week: avoid Mon AM; Tue 10/21 I have car drop‑off at 8:30. Book Sam for Wed/Fri 6:30–7:30 AM at Downtown Fitness, and slot 30‑min HIIT Tue/Thu around lunch. Sync to my calendar and keep buffers for travel when gym is involved.",
+          "expected_assistant_focus": "Provide a 12‑week framework and schedule this week’s sessions: Sam on Wed/Fri early morning, HIIT Tue/Thu lunch, avoid Mon AM, and add calendar blocks with travel buffers.",
+          "escalation_trigger": "planning_alignment"
+        },
+        {
+          "turn_id": "U9",
+          "thread_id": "T-language",
+          "timestamp_hint": "Evenings",
+          "user_message": "Confirm Spanish live classes this week Tue 10/21 and Thu 10/23 7:00–7:45 PM with Lucia. Add a daily 30‑min practice block (Duolingo + Anki) at 9:15–9:45 PM Sun–Thu. Start conversation‑partner search for next week within $150/mo and queue a short list.",
+          "expected_assistant_focus": "Verify class times and add to calendar, schedule nightly 30‑min practice blocks, and begin sourcing conversation partners within budget for next week.",
+          "escalation_trigger": "low_stakes_setup"
+        },
+        {
+          "turn_id": "U10",
+          "thread_id": "T-wedding",
+          "timestamp_hint": "Thu evening",
+          "user_message": "Advance venues: Seaside Loft, Garden Hall, Museum Atrium. Give me a quick pros/cons + rough cost comparison and note deposit deadlines (Seaside Loft $10k by 11/1). Block a 30‑min research session Thu 10/23 8:30–9:00 PM and share a short questions list for outreach. Add the hold to Taylor’s shared calendar.",
+          "expected_assistant_focus": "Compile venue pros/cons and costs, capture deposit timing, schedule a 30‑min research block on 10/23 evening, draft questions, and share with Taylor.",
+          "escalation_trigger": "medium_priority"
+        },
+        {
+          "turn_id": "U11",
+          "thread_id": "T-workB",
+          "timestamp_hint": "Tue late afternoon; Fri late afternoon",
+          "user_message": "Quarterly report + board deck: confirm Finance review Thu 10/23 2:00 PM with Evan. Set data pulls (revenue, churn, CAC) with Analytics by Wed EOD. Draft a deck outline and block work sessions Tue 4:30–6:00 PM and Fri 4:00–5:30 PM. Keep slides in Google Slides and repo Sheets linked.",
+          "expected_assistant_focus": "Confirm the 10/23 2:00 PM finance review, schedule data pulls due Wed EOD, draft the deck outline, add two focused work blocks, and set up Slides/Sheets linkage.",
+          "escalation_trigger": "deadline_48-72h"
+        },
+        {
+          "turn_id": "U12",
+          "thread_id": "T-weekend",
+          "timestamp_hint": "Day-of midday/afternoon",
+          "user_message": "For 10/26 dinner: schedule grocery delivery to arrive by 11:30 AM and block prep from 2:30–6:30 PM. Double‑check I have required equipment (sheet pans, skewers, blender, cocktail shaker, ice molds) and add missing items to the list if it keeps us ≤$200.",
+          "expected_assistant_focus": "Book a grocery delivery window by 11:30 AM, add a 4‑hour prep block, verify equipment inventory, and adjust the shopping list while maintaining the $200 cap.",
+          "escalation_trigger": "budget_cap"
+        },
+        {
+          "turn_id": "U13",
+          "thread_id": "T-weekend",
+          "timestamp_hint": null,
+          "user_message": "MERGE T-fitness + T-weekend: Align the tapas menu to my 2,000 kcal/day target and this week’s training (Wed/Fri strength 6:30–7:30 AM; Tue/Thu 30‑min HIIT at lunch). For the 10/26 dinner, estimate per‑guest calories/macros per item and suggest 2–3 lighter swaps (baked vs fried, more veg) that keep total ≤$200. Plan leftovers to become Mon/Tue lunches ~500–600 kcal each. Flag mocktail sugar load and give low‑sugar options.",
+          "expected_assistant_focus": "Combine menu with nutrition goals; estimate calories/macros per dish; propose lighter substitutions within $200; design leftovers into Mon/Tue lunches; provide low‑sugar mocktail variants; sync with workout days.",
+          "escalation_trigger": "MERGE"
+        },
+        {
+          "turn_id": "U14",
+          "thread_id": "T-renovation",
+          "timestamp_hint": null,
+          "user_message": "Check for any risk that 10/26 dinner prep/cleanup collides with the 10/28–10/30 demo window. Confirm with Jenna whether appliances/cabinets stay connected through Sunday night and if any pre‑demo staging happens over the weekend. If risk > low, propose mitigations: a) shift heavy prep offsite or to Sun AM; b) arrange a next‑day deep clean before demo; c) push demo start to 10/29. Include cost/time impacts.",
+          "expected_assistant_focus": "Contact contractor (Jenna) to confirm weekend usability and pre‑demo activities; assess collision risk; propose mitigation options with timelines and cost implications; keep demo on track.",
+          "escalation_trigger": "CONFLICT"
+        },
+        {
+          "turn_id": "U15",
+          "thread_id": "T-workA",
+          "timestamp_hint": "周三/周四",
+          "user_message": "MERGE T-workA + T-workB + T-parents: Build tight day plans for Wed 10/22 and Thu 10/23 covering (a) Nimbus follow‑ups post sprint‑prep, (b) Analytics data pulls due Wed EOD, (c) Finance review Thu 2:00 PM with Evan, and (d) parents’ paperwork/med list/insurance forms + clinic prep calls. Layer in travel estimates for Fri 10/24 parent pickup and set reminder anchors. Include existing holds (car Tue, Milo vet Wed late morning, Spanish Tue/Thu 7:00–7:45 PM) and surface conflicts.",
+          "expected_assistant_focus": "Produce integrated Wed/Thu schedules across work and parent prep; include buffers and existing holds; add reminders; estimate Fri travel; call out any conflicts and propose fixes.",
+          "escalation_trigger": "MERGE"
+        },
+        {
+          "turn_id": "U16",
+          "thread_id": "T-car",
+          "timestamp_hint": "Mon–Thu",
+          "user_message": "Give me a combined Mon–Thu view with buffers: Mon 10/20 sprint review 3:00 PM (+prep 10:00–11:00); Tue 10/21 Baystate Subaru 8:30 AM with loaner (4–6h), marketing assets due EOD, work session 4:30–6:00 PM; Wed 10/22 trainer 6:30–7:30 AM + Milo vaccines late morning, data pulls due EOD; Thu 10/23 finance review 2:00 PM + Spanish 7:00–7:45 PM. Add 30–45 min travel where needed and flag any tight spots. Keep SMS updates from service.",
+          "expected_assistant_focus": "Compile a single calendar for Mon–Thu with buffers; identify tight spots/conflicts; confirm service SMS updates; adjust holds if required.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U17",
+          "thread_id": "T-workB",
+          "timestamp_hint": "今天",
+          "user_message": "I want a crisp board deck outline today: slide list with owners and data sources, plus a data‑pull checklist (revenue, churn, CAC) with dimensions/time ranges and owners, all due Wed 10/22 EOD. Also block a 15‑min sync Tue 10/21 5:45 PM with Analytics. Keep Slides/Sheets linked.",
+          "expected_assistant_focus": "Deliver slide outline and data checklist with owners/sources and deadlines; calendar a 5:45 PM Tue sync with Analytics; ensure Slides/Sheets linkage.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U18",
+          "thread_id": "T-investment",
+          "timestamp_hint": null,
+          "user_message": "Confirm DCA $1,000 executes on the 25th; MERGE with pay cycle so funds clear same day. If 10/25 is weekend/holiday, shift to next business day; set ACH sweep T‑1 by 4:00 PM. Rebalance to 70/20/10 with TSLA satellite as planned; outline TLH candidates and wash‑sale guardrails. Offer advisor slot Wed 10/22 at 4:30 or 5:00 PM.",
+          "expected_assistant_focus": "Verify DCA timing and align with payroll; set ACH sweep and weekend/holiday rules; detail rebalance and TLH with wash‑sale cautions; propose advisor times and check for calendar conflicts.",
+          "escalation_trigger": "MERGE"
+        },
+        {
+          "turn_id": "U19",
+          "thread_id": "T-dog",
+          "timestamp_hint": null,
+          "user_message": "MERGE T-dog + T-fitness: Make Milo’s walks my warm‑ups/cool‑downs. Propose Tue/Thu 20‑min brisk walk ~11:30 AM before HIIT; Wed/Fri 15‑min cool‑down walk 7:45 AM after training. Add daily 25‑min easy evening walks ~8:10 PM (after Spanish Tue/Thu). Adjust around Wed vaccine—no vigorous work right after; confirm groomer Sat 10/26 morning still works with dinner prep.",
+          "expected_assistant_focus": "Integrate dog walks with workout timings; adjust for vaccine recovery; confirm groomer booking vs dinner prep; add to calendar.",
+          "escalation_trigger": "MERGE"
+        },
+        {
+          "turn_id": "U20",
+          "thread_id": "T-parents",
+          "timestamp_hint": "Wed/Thu prep; Fri/Sat visits",
+          "user_message": "Consolidate parents’ logistics into a pinned plan: confirm Fri 10/24 8:15 AM pickup for 10:00 AM cardiology (Dr. Kim, Boston Heart Clinic) and Sat 10/25 11:45 AM pickup for 1:30 PM PCP (Dr. Patel). Include parking buffers, paperwork checklist, and medication/BP log prep times Wed/Thu. Add clinic phone numbers and a Lyft fallback if timing slips.",
+          "expected_assistant_focus": "Finalize transport timelines with buffers; add contact info and checklists; schedule prep blocks Wed/Thu; define fallback transport.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U21",
+          "thread_id": "T-weekend",
+          "timestamp_hint": "Thu evening / Fri early evening",
+          "user_message": "Plan grocery run windows around Thu Spanish and Fri parent prep: reserve Thu 5:15–6:15 PM or Fri 6:00–6:45 PM for any extras. Keep main grocery delivery Sat by 11:30 AM. Prioritize perishables timing and list substitutions to stay ≤$200.",
+          "expected_assistant_focus": "Schedule optional grocery windows; ensure delivery timing; manage substitutions and budget; avoid conflicts with other holds.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U22",
+          "thread_id": "T-fitness",
+          "timestamp_hint": "本周",
+          "user_message": "Refine this week: Tue/Thu 30‑min HIIT at home 12:15–12:45 PM (avoid gym due to car Tue), Wed/Fri with Sam 6:30–7:30 AM at Downtown Fitness with 20‑min travel buffers. Give daily calorie/macro targets and a Sun meal‑prep list that uses dinner‑party leftovers for Mon/Tue lunches.",
+          "expected_assistant_focus": "Lock final workout times with buffers; provide daily macro targets; design Sunday meal‑prep leveraging leftovers; sync to calendar.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U23",
+          "thread_id": "T-workA",
+          "timestamp_hint": "Tue midday/EOD",
+          "user_message": "Re‑confirm with Maya that marketing assets are due Tue 10/21 EOD and I’ll be in/out due to car service. Set a noon review window and an EOD Slack handoff by 6:00 PM. If service runs past 3:30 PM, line up a remote sign‑off. Flag any copy‑change risks.",
+          "expected_assistant_focus": "Coordinate with Marketing for noon review and 6 PM handoff; plan remote sign‑off contingency around car service; surface copy risks and mitigation.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U24",
+          "thread_id": "T-renovation",
+          "timestamp_hint": "Tue midday",
+          "user_message": "Ahead of tile pick Tue 12:30–12:50 PM, send the 3‑option shortlist with price/lead time/style fit and confirm with Jenna selections won’t slip the 10/28–10/30 demo. Also line up floor protection/dust control and an appliance disconnect plan for Mon morning 10/27, keeping the kitchen fully usable through Sun night for the dinner.",
+          "expected_assistant_focus": "Deliver tile shortlist; verify demo timing unaffected; schedule protection and Mon appliance disconnect while ensuring Sun night usability; coordinate with contractor.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U25",
+          "thread_id": "T-car",
+          "timestamp_hint": "Mon–Thu planning",
+          "user_message": "Update: Baystate says the airbag recall part isn’t in. Reschedule service to Wed 10/22 8:30 AM with the loaner still guaranteed. Keep oil change + brake pads + recall in the same visit; budget still ≤$600. Rebuild my Mon–Thu view from U16 with this change and keep SMS status toggled on. Flag Wed conflicts (trainer 6:30–7:30, data pulls EOD, possible NYC day trip TBD) and propose best sequencing with realistic travel buffers. Confirm drop-off ETA, loaner pickup flow, and a 4–6 hr finish window.",
+          "expected_assistant_focus": "Reschedule car service to Wed 10/22 8:30 AM with loaner; update calendar and Mon–Thu plan; surface conflicts and propose sequencing; maintain SMS updates; confirm timelines and budget.",
+          "escalation_trigger": "Disruption: Car recall part delay"
+        },
+        {
+          "turn_id": "U26",
+          "thread_id": "T-dog",
+          "timestamp_hint": "Tue afternoon",
+          "user_message": "Urgent: Milo vomited twice this morning. I booked GreenPaws urgent slot Tue 10/21 4:30 PM. Move vaccines to Thu 10/23 late morning; no vigorous exercise 24 hrs after. Adjust the warm-up/cool-down walk plan from U19 accordingly. Prep guidance: fasting needed? bring stool sample? Give likely causes list, at-home care, bland diet (rice + boiled chicken) quantities for a 70‑lb Lab, and red flags that trigger emergency. Keep groomer Sat 10/26 morning on hold—define go/no-go criteria and make the call by Fri 3:00 PM.",
+          "expected_assistant_focus": "Add urgent vet appt Tue 10/21 4:30; shift vaccines to Thu 10/23; adjust exercise/walks; provide pre-visit prep and aftercare plan; set groomer decision criteria and reminder.",
+          "escalation_trigger": "Disruption: Dog illness"
+        },
+        {
+          "turn_id": "U27",
+          "thread_id": "T-workB",
+          "timestamp_hint": "Thu afternoon",
+          "user_message": "Finance review moved to Thu 10/23 3:30 PM. Update invite and notify Evan + Analytics. Keep my Spanish 7:00–7:45 PM intact. Given Milo’s Tue 4:30 vet, push the Tue 5:45 Analytics sync to 6:15 PM remote or Wed 8:45–9:00 AM—pick the least disruptive. Reconfirm board deck outline/owners today and data pulls due Wed EOD. Send risk flags if NYC travel will cut into prep.",
+          "expected_assistant_focus": "Reschedule finance review to 3:30; notify stakeholders; adjust Analytics sync time; ensure board deck outline and data pulls are on track; flag risks from travel.",
+          "escalation_trigger": "Disruption: Finance review time changed"
+        },
+        {
+          "turn_id": "U28",
+          "thread_id": "T-parents",
+          "timestamp_hint": "Fri morning",
+          "user_message": "Boston Heart Clinic pushed cardiology to Fri 10/24 11:30 AM. Rebuild transport: pick up Lina & Raj ~9:45 AM, arrive 11:00, park/check-in; add snack/lunch buffer after. PCP Sat 10/25 1:30 PM stays. Update Lyft fallback, clinic call sheet, and paperwork/med list prep blocks Wed/Thu so nothing slips. Confirm if any fasting or med holds change with the new time.",
+          "expected_assistant_focus": "Revise Fri transport schedule with new 11:30 appointment; add buffers; maintain Sat PCP plan; update prep tasks and clinic coordination; verify fasting/med guidance.",
+          "escalation_trigger": "Disruption: Cardiology moved"
+        },
+        {
+          "turn_id": "U29",
+          "thread_id": "T-workA",
+          "timestamp_hint": "Thu planning",
+          "user_message": "NYC client day trip on Thu 10/23 just hit a 90‑min arrival delay. MERGE T-workA + T-workB: Re-sequence so (a) client meets 12:30–1:15 PM if they accept, (b) I can still do finance review at 3:30 PM remotely from the airport if needed, and (c) Wed data pulls still hit EOD. Give two options: 1) keep Thu travel with remote finance review; 2) slide client to Fri remote 9:00–9:45 AM (check parents pickup timing) and keep Thu local. Share trade-offs, risks to Nimbus assets and board prep, and stakeholder comms drafts.",
+          "expected_assistant_focus": "Present two viable schedules with impacts; handle calendar updates; prep comms to client, Maya, and Evan; ensure data pulls hit; highlight conflicts with parents’ Friday pickup.",
+          "escalation_trigger": "Disruption: Flight delay"
+        },
+        {
+          "turn_id": "U30",
+          "thread_id": "T-renovation",
+          "timestamp_hint": "Mon 10/27 morning",
+          "user_message": "Jenna is proposing moving demo up to Mon 10/27. Compare vs 10/28 start: schedule pull-in, crew availability, tile/appliance logistics, and contingency/budget impacts. Critical: kitchen must be fully usable through Sun night 10/26 for the dinner. Confirm no weekend disconnects and schedule Mon 7:30–9:00 AM for appliance disconnect + floor protection. If risk > low, propose mitigations (offsite prep, temp induction burner, next-day deep clean) with time/cost estimates.",
+          "expected_assistant_focus": "Evaluate demo date change; confirm kitchen usability through Sun night; set Monday disconnect logistics; propose mitigations with cost/time; align with dinner event.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U31",
+          "thread_id": "T-weekend",
+          "timestamp_hint": "Sat evening",
+          "user_message": "Protect the Sat 10/26 tapas dinner 7–10 PM. Build contingencies: A) backup venue within 15 min (friend/common room) no fee; B) backup drop‑off tapas caterer for 8, cap +$120 over the $200 baseline; C) shift to Sun 10/27 6–9 PM only if demo stays Tue. Define decision gates at Thu 10/23 12:00 PM and Fri 5:00 PM based on renovation confirmation. Keep grocery delivery Sat by 11:30 AM; add a minimal‑prep menu variant for the backup plan.",
+          "expected_assistant_focus": "Create venue/catering backups with costs; set decision gates; maintain grocery timing; provide minimal-prep menu; tie readiness to renovation status.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U32",
+          "thread_id": "T-workA",
+          "timestamp_hint": "Wed–Thu planning",
+          "user_message": "MERGE T-workA + T-car + T-dog + T-parents: Rebuild Wed 10/22 and Thu 10/23 day plans with the new facts—Wed: trainer 6:30–7:30, car drop 8:30 (loaner), Nimbus follow-ups + data pulls due EOD; Thu: NYC delayed arrival window, finance 3:30, Spanish 7:00, dog vaccines late morning, parent paperwork blocks. Include travel, where to work from (office vs home vs airport), comms templates (Maya/client/Evan), and what to punt vs delegate.",
+          "expected_assistant_focus": "Produce integrated Wed/Thu schedules; resolve conflicts; assign work locations; draft stakeholder messages; recommend punts/delegations while preserving critical deadlines.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U33",
+          "thread_id": "T-wedding",
+          "timestamp_hint": null,
+          "user_message": "SPLIT T-wedding from this week’s active queue. Track Seaside Loft $10k deposit due Nov 1 in a separate milestone list with reminders on Mon 10/27 and Thu 10/30. Park vendor shortlist tasks until next week; just send soft‑hold emails by Wed to photographer and caterer to keep slots warm. No further time spent this week unless a hard deadline emerges.",
+          "expected_assistant_focus": "Execute SPLIT; set deposit reminders; send minimal soft-hold emails; ensure no additional wedding tasks consume this week.",
+          "escalation_trigger": "Force SPLIT"
+        },
+        {
+          "turn_id": "U34",
+          "thread_id": "T-parents",
+          "timestamp_hint": "Fri midday",
+          "user_message": "Call Boston Heart Clinic to confirm the 11:30 AM slot, valet/parking details, and expected visit length. Update calendar blocks: pick‑up 9:45–10:45, clinic 11:00–1:00, lunch 1:00–1:45, drop‑off 1:45–2:45. Add a Lyft fallback for return leg only if I’m pulled into work. Prepare a one‑page checklist for Lina & Raj (ID, insurance cards, med list, co‑pay, recent BP readings).",
+          "expected_assistant_focus": "Confirm clinic logistics; update detailed calendar; set Lyft contingency; generate clear patient checklist.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U35",
+          "thread_id": "T-dog",
+          "timestamp_hint": "Mon night–Tue",
+          "user_message": "Between now and Tue’s 4:30 vet, set a monitoring protocol: track water intake, vomit count, appetite, energy, bathroom. Prep a go‑bag (records, meds, towels). Order Pedialyte and a probiotic—budget ≤$40. Stock bland diet ingredients tonight. If symptoms worsen (>3 vomits or lethargy), trigger GreenPaws emergency line and alert me.",
+          "expected_assistant_focus": "Create monitoring checklist; order supplies within budget; prep go-bag; define escalation thresholds and alert flow.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U36",
+          "thread_id": "T-workB",
+          "timestamp_hint": "EOD today",
+          "user_message": "Board deck: send me EOD status—slide list with owners assigned, data pulls on track, and any blockers. If Wed car service compresses my time, pre-assign draft owners for intro/summary and ask Analytics to pre-stage revenue/churn/CAC charts by Thu 10:00 AM. Keep the 3:30 Thu review crisp; prep a 10‑slide must‑have fallback if NYC logistics cut prep time.",
+          "expected_assistant_focus": "Provide status; mitigate time risk via delegation; ensure charts are pre-staged; keep review readiness with a concise fallback deck.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U37",
+          "thread_id": "T-workA",
+          "timestamp_hint": "Mon morning",
+          "user_message": "Force MERGE: T-workA + T-workB + T-parents + T-dog into a single Mon 10/20–Sun 10/26 plan. Lock Option 1 from U29: keep Thu 10/23 NYC day trip with client 12:30–1:15 PM if they accept; do the 3:30 PM finance review remote (airport if needed). Build the unified calendar with 30–60 min blocks and realistic buffers: include trainer M/W/F 6:30–7:30 AM, Sprint review Mon 3:00 PM, Marketing assets due Tue EOD, Milo urgent vet Tue 4:30 PM, car service Wed 8:30 AM (loaner; 4–6 hrs), data pulls Wed EOD, Milo vaccines Thu late morning (no vigorous exercise for him 24 hrs after), Spanish Tue/Thu 7:00–7:45 PM, parents cardiology Fri 11:30 AM with 9:45 AM pickup, PCP Sat 1:30 PM, dinner Sat 7–10 PM, groomer Sat morning on hold (go/no-go Fri 3:00 PM). Add travel times (home↔clinic, airport, office), specify where I’m working each block (home, office, airport), and call out conflicts plus your resolutions (what to punt/delegate). Include comms micro-templates inline for client, Maya, Evan, and my parents for any time shifts. Keep SMS status updates on for car and vet.",
+          "expected_assistant_focus": "Produce a unified, time-blocked weekly calendar with buffers, lock the Thu travel plan, surface conflicts, propose punts/delegations, and include brief comms templates for key stakeholders; note work locations and travel times.",
+          "escalation_trigger": "MERGE"
+        },
+        {
+          "turn_id": "U38",
+          "thread_id": "T-workB",
+          "timestamp_hint": null,
+          "user_message": "Lock the Analytics sync to Tue 10/21 6:15–6:45 PM remote (per U27). Update the invite and notify Analytics. Now deliver the board deck outline ready for review: 12–15 slides with owners/due times, data dependencies (revenue, churn, CAC), and a 10‑slide must‑have fallback. Pre‑assign draft owners for exec summary and KPIs if my Wed bandwidth is tight due to car service. Ensure charts pre‑staged by Thu 10:00 AM; include a checklist of what must be final by the Thu 3:30 PM finance review and what can land by Sun night.",
+          "expected_assistant_focus": "Send updated invites, produce a concrete slide outline with owners and due dates, confirm data dependencies and pre-staging timeline, and define a must-have fallback with a readiness checklist for the Thu review.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U39",
+          "thread_id": "T-workA",
+          "timestamp_hint": null,
+          "user_message": "Draft the Nimbus v2 launch checklist for this week: marketing assets due Tue 10/21, final copy QA buffer, dev handoffs, risk to last‑minute copy changes, UAT sanity passes, sign‑offs, and go/no‑go gates. Put dates/times and owners on each item; highlight anything blocked by the NYC trip. Include a short stakeholder comms plan to Maya and Dev with what I need from them by Tue EOD and Wed noon.",
+          "expected_assistant_focus": "Produce a dated, owner-assigned launch checklist with risk/mitigation notes and a succinct comms plan to Marketing and Dev outlining asks and deadlines.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U40",
+          "thread_id": "T-investment",
+          "timestamp_hint": null,
+          "user_message": "Consolidated budget view, please: Renovation $25,000 (+10% contingency), Car service Wed (oil + brake pads + airbag recall) target ≤$600 but assume risk of +$100 overrun, Dinner party baseline $200 with up to +$120 if we flip to drop‑off catering, Dog care supplies from U35 ≤$40, and DCA $1,000 scheduled for Sat 10/25. Show current week cash impact and the next 2 weeks. If the car comes in >$600, propose two reallocation options: A) trim the dinner grocery budget to $160 and tighten the menu; B) delay a non‑critical renovation purchase/selection by one week (name a candidate) to keep cash neutral. Recommend one and note any risks. Keep DCA intact unless cash falls below a safe buffer; if so, propose a temporary DCA reduction path.",
+          "expected_assistant_focus": "Assemble a consolidated cash view across categories, flag the potential brake pad overrun, propose concrete reallocation options with pros/cons, and recommend a path while safeguarding the DCA plan.",
+          "escalation_trigger": "Budget tension"
+        },
+        {
+          "turn_id": "U41",
+          "thread_id": "T-weekend",
+          "timestamp_hint": null,
+          "user_message": "Lock the tapas dinner plan. Build the final run‑of‑show for Sat 10/26: grocery delivery by 11:30 AM, 3.5‑hour prep starting 2:00 PM, guests 7–10 PM. Menu for 8: tortilla española, patatas bravas, garlic shrimp, albóndigas, pan con tomate, marinated olives; mocktails: citrus spritz + cucumber‑mint cooler. Produce a quantified grocery list with brand/size suggestions, equipment checklist (sheet pans, cast‑iron, toothpicks, seltzer maker, ice), and a minute‑by‑minute prep timeline with parallelization. Include a minimal‑prep variant if we need to pivot. Keep backups: A) nearby free venue; B) two drop‑off tapas caterers within +$120; C) move to Sun 6–9 PM only if demo stays Tue. Set decision gates Thu 12:00 and Fri 5:00 based on renovation confirmation.",
+          "expected_assistant_focus": "Deliver a detailed shopping list, equipment and prep timeline, plus minimal-prep variant and backup venue/caterer options aligned to decision gates tied to renovation risk.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U42",
+          "thread_id": "T-dog",
+          "timestamp_hint": null,
+          "user_message": "Confirm with GreenPaws: vaccines moved to Thu 10/23 late morning; ask whether any fasting is needed and if bringing a stool sample helps post‑vomiting eval. For today–Thu: confirm at‑home care plan, whether to start omeprazole or Cerenia, and exact dosing for a 70‑lb Lab if prescribed. Schedule a follow‑up check call Fri 10:00 AM. Re‑state go/no‑go criteria for the Sat morning groomer and set the decision reminder Fri 3:00 PM.",
+          "expected_assistant_focus": "Call the clinic to confirm vaccine timing and prep, clarify meds/dosing, schedule a follow-up, and codify groomer go/no-go criteria with reminders.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U43",
+          "thread_id": "T-parents",
+          "timestamp_hint": null,
+          "user_message": "Call Boston Heart Clinic to confirm no fasting/med holds for the Fri 11:30 AM cardiology. Re‑confirm valet/parking, expected visit length, and whether they can accommodate a small schedule slip if traffic hits. Update the transport plan: pick‑up 9:45–10:45, arrive/check‑in 11:00, visit 11:30–1:00, lunch 1:00–1:45, drop‑off 1:45–2:45; add Lyft fallback for the return leg only if I’m pulled into work. Finalize the one‑pager checklist for Lina & Raj and text it to them today.",
+          "expected_assistant_focus": "Obtain clinical logistics (fasting/med holds, timing, parking), refine the transport timeline with buffers and Lyft fallback, and prepare/send the parents’ one-pager.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U44",
+          "thread_id": "T-fitness",
+          "timestamp_hint": null,
+          "user_message": "Integrate this week’s minimum viable fitness around the revised calendar. Propose the least‑disruptive plan that still hits goals: likely trainer Wed 6:30–7:30 and Fri 6:30–7:30 (Sam), plus one 20‑minute HIIT at home Sun late morning. Add two 10‑minute mobility blocks (Tue pre‑vet, Thu pre‑Spanish). Confirm with Sam, put holds on my calendar, and adjust warm‑up/cool‑down walks to Milo’s restrictions post‑vaccines. Keep nutrition at 2,000 kcal/day; give a quick meal‑prep list for Sun that coexists with any renovation prep.",
+          "expected_assistant_focus": "Schedule trainer sessions and short HIIT/mobility around constraints, confirm with Sam, adjust dog-walk intensities post-vaccine, and provide a simple nutrition/meal-prep plan.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U45",
+          "thread_id": "T-renovation",
+          "timestamp_hint": "Thu 12:00 PM",
+          "user_message": "On Jenna’s proposal to pull demo to Mon 10/27: proceed only if kitchen stays fully usable through Sun night 10/26. Ask Northstar to guarantee no weekend disconnects. Tentatively schedule Mon 7:30–9:00 AM for appliance disconnect + floor protection, with a next‑day deep clean if dust is high. Compare Mon 10/27 vs Tue 10/28 start on crew availability, tile/appliance logistics, and budget/contingency. Deliver a risk matrix + mitigations (offsite prep, temp induction burner, cleaning) with cost/time estimates. Decision gate Thu 10/23 12:00 PM.",
+          "expected_assistant_focus": "Gather confirmations from Jenna, compare start dates on resources/logistics/budget, and produce a risk/mitigation matrix with costs and a clear decision recommendation before Thu noon.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U46",
+          "thread_id": "T-investment",
+          "timestamp_hint": null,
+          "user_message": "Confirm DCA execution for Sat 10/25 with Fidelity—if weekend, execute next business day Mon 10/27. Check cash balance; if short, schedule an internal transfer by Fri 10/24 10:00 AM and create a reminder. Add a tax‑loss harvesting watchlist for any red names and criteria for harvesting this quarter. Send me a one‑liner summary I can paste into my personal finance tracker.",
+          "expected_assistant_focus": "Verify DCA timing and sufficient cash, queue a transfer/reminder if needed, set up a TLH watchlist with rules, and provide a concise status summary.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U47",
+          "thread_id": "T-workA",
+          "timestamp_hint": null,
+          "user_message": "Draft stakeholder comms I can send today: 1) Maya: confirm asset deliverables/status for Tue EOD + any copy risks; 2) Evan: confirm Thu 3:30 finance review is remote and what I’ll have locked; 3) Jenna (Northstar): our dinner constraint and the demo start decision gate; 4) Parents: pickup time Fri 9:45, what to bring, timing. Keep each to 4–6 sentences, action‑oriented, with polite but crisp asks.",
+          "expected_assistant_focus": "Produce four concise, tailored messages covering status, asks, and logistics for Maya, Evan, Jenna, and the parents, consistent with the unified plan.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U48",
+          "thread_id": "T-weekend",
+          "timestamp_hint": "Thu noon",
+          "user_message": "RSVP finalization for Sat: ping guests today for dietary restrictions and hard confirm headcount by Thu 12:00 PM. Propose a simple seating/standing layout for 8 in my apartment, an ice plan (how many pounds, when to buy), and a short day‑of checklist (music, lighting, trash bags, coat area). If headcount drops to 6 or rises to 10, show how you’ll scale the menu and budget.",
+          "expected_assistant_focus": "Send/prepare RSVP and dietary check, propose layout and ice plan, provide a day-of checklist, and include scalable menu/budget guidance for 6–10 guests.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U49",
+          "thread_id": "T-workA",
+          "timestamp_hint": "Mon afternoon",
+          "user_message": "Final MERGE checkpoint for Mon 10/20–Sun 10/26: validate the unified calendar exactly as built in U37 (blocks, 30–60 min buffers, travel, and location tags per block), and include compact day views for Wed 10/22 and Thu 10/23 since sequencing is tight. Flag any residual conflicts or risky transitions and propose immediate fixes. Lock comms today: 1) Maya: assets due Tue EOD with copy QA buffer; confirm no new late-copy risk; 2) Evan: Thu 3:30 PM finance review remote; what’s locked by Thu vs what can land by Sun night; 3) Client: confirm Thu NYC 12:30–1:15 PM by Tue 10:00 AM; note I’ll do finance review remote after; 4) Parents: Fri pickup 9:45 AM, what to bring, timing recap; 5) Jenna: demo decision gate Thu 12:00 PM, dinner constraint Sat 7–10 PM, and requirement that kitchen remain fully usable through Sun night if demo is pulled to Mon. Cross-thread locks: Tile selection decision by Tue 10/21 12:00 PM—if I’m silent, proceed with your top in‑stock, under‑budget choice from our prior shortlist and place a vendor hold; text me the SKU and price. Dinner backup: hold nearby free venue and two drop‑off tapas caterers through Fri 5:00 PM; auto‑switch to drop‑off Caterer B (≤+$120) if demo date shifts earlier or headcount >8; confirm the trigger logic. Car: confirm Baystate Subaru loaner for Wed 8:30 AM and enable SMS status; if loaner falls through, auto‑book Lyft roundtrip and shift my Wed work blocks accordingly; confirm plan. Budget: pre‑approve U40 Option B (delay a non‑critical renovation purchase by 1 week, name the candidate) to offset any car overrun >$600; keep DCA intact. After confirming and sending, SPLIT back to individual threads and set alerts for: Thu 12:00 PM demo decision, Thu 12:00 PM dinner headcount/backup, Fri 10:00 AM Milo follow‑up call, and Fri 3:00 PM groomer go/no‑go. Return with the updated calendar summary and sent‑message status plus any outstanding asks for me.",
+          "expected_assistant_focus": "Validate and finalize the merged week plan; surface any remaining conflicts; send/schedule stakeholder messages with crisp asks; set and confirm decision gates; pre-authorize budget contingency Option B; confirm car loaner and dinner backup triggers; then SPLIT threads with alerts and provide updated calendar and comms status.",
+          "escalation_trigger": null
+        },
+        {
+          "turn_id": "U50",
+          "thread_id": "T-car",
+          "timestamp_hint": "Mon EOD",
+          "user_message": "Lock the Wed 10/22 8:30 AM service at Baystate Subaru: call to guarantee a loaner (confirm license/insurance requirements and fuel policy), verify airbag recall parts are in stock, and get a written estimate for oil + brake pads + recall. Plan: drop‑off 8:20–8:30 AM; I work remote from the dealer lounge 9:00–1:00 with a 12:30 status check; if not ready by 2:00, extend loaner; if >3:00, set next‑morning pickup and confirm overnight rules. Turn on SMS updates and record a live escalation contact. If no loaner is guaranteed, auto‑book their partner rental or Lyft both ways and adjust my Wed calendar holds; only notify Evan/Analytics if timing threatens Thu deliverables. Budget: if estimate >$600 pre‑tax, execute U40 Option B (delay the non‑critical renovation item you named) and confirm back; cap at $700 unless safety‑critical. Add calendar travel buffers and a check‑in/out block; include a 2‑sentence contingency note I can paste to Evan if I get stuck at the dealer. Confirm Wi‑Fi availability, a quiet workspace, and Apple Pay/contactless options.",
+          "expected_assistant_focus": "Directly confirm loaner, parts availability, estimate, and logistics; enable SMS and escalation contact; map the remote‑work plan and timing triggers; update calendar with buffers and check-ins; implement budget Option B if cost >$600; prepare contingency comms; only escalate to stakeholders if deliverables risk timing.",
+          "escalation_trigger": null
+        }
+      ],
+      "evaluation_rubric": [
+        {
+          "criterion": "Memory fidelity & constraint adherence",
+          "description": "Consistently recalls and updates facts across threads (rescheduled car service to Wed 10/22 8:30 AM with loaner; finance review moved to Thu 3:30 PM; cardiology moved to Fri 11:30 AM; Milo vaccines Thu late morning; NYC client window; Spanish Tue/Thu; RSVP/decision gates). Honors explicit constraints (kitchen fully usable through Sun night 10/26; budget caps and triggers incl. car ≤$600 pre-tax with pre-approved Option B if over; Milo no vigorous exercise 24h post-vaccines; DCA execution and pay-cycle alignment; nutrition 2,000 kcal/day; travel buffers 30–45 min) and persists toggles (SMS updates for car and vet) without drift.",
+          "weight": 0.23
+        },
+        {
+          "criterion": "Conflict detection, calendar accuracy & mitigation",
+          "description": "Builds a unified calendar with accurate times, locations (home, office, airport, dealer), and realistic buffers (30–60 min blocks and 30–45 min travel). Proactively surfaces conflicts (e.g., Wed trainer → car drop-off → work blocks; Tue urgent vet vs Analytics sync; Thu NYC delay vs finance review vs Spanish; dinner prep vs renovation staging) and proposes concrete mitigations with sequencing and impacts (remote reviews, re-times, delegate/punt decisions, backup venue/caterer, appliance disconnect timing). Day views for Wed 10/22 and Thu 10/23 are crisp and executable.",
+          "weight": 0.27
+        },
+        {
+          "criterion": "Cross-thread synthesis, merges/splits & trigger management",
+          "description": "Executes explicit MERGEs/SPLITs with clear rationale and links (e.g., T-workA+T-workB+T-parents+T-dog unified plan; T-fitness+T-weekend menu aligned to macros and budget; T-wedding split to next week with Nov 1 deposit tracking). Maintains branch state, references prior decisions, and sets/uses decision gates and auto-triggers correctly (Thu 12:00 demo decision; Thu 12:00 dinner headcount/backup; Fri 10:00 Milo follow-up; Fri 3:00 groomer go/no-go; auto-switch to Caterer B if demo shifts earlier or headcount >8; Option B budget if car >$600).",
+          "weight": 0.2
+        },
+        {
+          "criterion": "Responsiveness, replanning speed & contingency quality",
+          "description": "Responds rapidly to disruptions (Milo illness, car part delay, NYC arrival delay) with targeted clarifying questions and high-quality contingencies (loaner failover to rental/Lyft; 12:30 status check; 2:00 extend/3:00 next-morning pickup; remote finance review from airport; offsite prep/cleaning/induction burner for renovation). Includes cost/time impacts and escalation contacts, guardrails (budget caps, safety-critical exceptions), and ensures critical deliverables (marketing assets Tue EOD, data pulls Wed EOD, charts Thu 10:00) stay on track.",
+          "weight": 0.18
+        },
+        {
+          "criterion": "Clarity, actionability & owner/date specificity",
+          "description": "Produces concise, actionable artifacts: checklists, minute-by-minute prep timelines, quantified grocery lists with brands/sizes, decision frameworks with trade-offs, slide lists with owners/due times, data-pull checklists with dimensions/time ranges, pinned parent logistics one-pager, micro-templates for comms (Maya, Evan, client, Jenna, parents), and finance one-liner. Outputs are scannable, unambiguous, and ready to execute.",
+          "weight": 0.12
+        }
+      ],
+      "notes": {
+        "multi_turn_requirements": [
+          "Renovation: Deliver 3-tile shortlist with specs before Tue 10/21 12:30–12:50 decision block; share with Jenna; confirm it won’t slip demo. Maintain kitchen usability through Sun night 10/26. Prepare Mon 10/27 7:30–9:00 AM appliance disconnect + floor protection if demo pulled up. Provide risk matrix comparing Mon 10/27 vs Tue 10/28. Hit demo decision gate Thu 10/23 12:00 PM.",
+          "Car service: Lock Wed 10/22 8:30 AM appointment, guarantee loaner (license/insurance/fuel policy), verify recall parts in stock, written estimate, enable SMS updates, record escalation contact. Schedule 12:30 status check; if not ready by 2:00 extend loaner; if >3:00 set next-morning pickup and confirm overnight rules. If estimate >$600 pre-tax, execute pre-approved Option B (delay non-critical renovation item) up to $700 cap unless safety-critical. Adjust calendar holds and travel buffers; confirm dealer Wi‑Fi/quiet workspace.",
+          "Dog care: Tue 10/21 4:30 PM urgent vet; move vaccines to Thu late morning; confirm fasting/stool sample guidance. At-home monitoring protocol and supplies ≤$40. Schedule Fri 10:00 AM follow-up call and Fri 3:00 PM groomer go/no-go decision; update warm-up/cool-down walks to respect 24h post-vaccine restriction.",
+          "WorkB/Analytics: Lock Tue 10/21 6:15–6:45 PM remote sync; confirm data pulls (revenue, churn, CAC) due Wed EOD; pre-stage charts by Thu 10:00 AM; run Thu 3:30 PM finance review remote with a 10-slide must-have fallback; assign slide owners and due times.",
+          "WorkA/Marketing: Confirm Maya’s assets due Tue EOD; noon review; EOD Slack handoff by 6:00 PM; flag copy-change risks and ensure UAT/QA buffers.",
+          "NYC client: Confirm Thu 10/23 12:30–1:15 PM by Tue 10:00 AM; plan remote finance review from airport; provide alternate sequencing option and comms if client slides to Fri 9:00–9:45 AM.",
+          "Parents: Confirm Fri 10/24 11:30 AM cardiology details (no fasting/med holds, parking/valet, visit length, slip tolerance). Update transport: pickup 9:45–10:45, clinic 11:00–1:00, lunch 1:00–1:45, drop-off 1:45–2:45; Lyft fallback for return if needed. Send one-page checklist (ID, insurance, med list, co‑pay, BP readings).",
+          "Weekend dinner: Lock menu/run-of-show; headcount/dietary ping and hard confirm by Thu 12:00 PM. Hold backups: nearby free venue and two drop-off caterers (≤+$120). Decision gates Thu 12:00 and Fri 5:00; auto-switch to Caterer B if demo date shifts earlier or headcount >8. Grocery delivery Sat by 11:30 AM; minimal-prep variant ready.",
+          "Investment: DCA $1,000 scheduled Sat 10/25; if weekend, execute Mon 10/27; ACH sweep T‑1 by Fri 10/24 4:00 PM. Rebalance to 70/20/10 with TSLA satellite; set TLH watchlist and wash-sale guardrails; offer advisor slot Wed 10/22 4:30 or 5:00 PM; send one-liner summary for finance tracker.",
+          "Wedding: Split from active queue; track Seaside Loft $10k deposit due Nov 1 with reminders Mon 10/27 and Thu 10/30; send soft‑hold emails to photographer and caterer by Wed.",
+          "Global alerts: Set and honor alerts for Thu 12:00 PM demo decision, Thu 12:00 PM dinner headcount/backup trigger, Fri 10:00 AM Milo follow‑up call, and Fri 3:00 PM groomer go/no-go."
+        ],
+        "expected_failure_modes": [
+          "Forgets rescheduled times or updated stakeholders (e.g., car moved to Wed; finance review moved to 3:30; cardiology moved to 11:30; vaccines moved to Thu) causing calendar drift.",
+          "Misses decision gates/triggers (Thu noon demo decision; Thu noon dinner headcount; Fri 10:00 Milo follow-up; Fri 3:00 groomer decision) leading to last-minute scrambling.",
+          "Inaccurate or unrealistic calendar buffers and locations, resulting in tight or infeasible transitions (e.g., insufficient travel time between trainer → dealer → work, or airport timing for remote review).",
+          "Fails to detect or resolve conflicts across threads (e.g., Tue urgent vet vs Analytics sync; Thu NYC delay vs finance review vs Spanish; renovation prep conflicting with dinner).",
+          "Poor budget adherence or trigger handling (does not execute Option B when car >$600; overspends dinner budget; alters DCA without cash buffer analysis).",
+          "Cross-thread contamination or memory bleed (mixes owners/data sources; confuses tile shortlist with appliance logistics; misaligns fitness macros with dinner menu).",
+          "Weak contingencies or lack of escalation (no backup if loaner unavailable; doesn’t set status checks; no remote plan for finance review; no catering/venue backup).",
+          "Inadequate medical handling (ignores Milo’s 24h post-vaccine restriction; omits at-home care details; fails to confirm fasting/med holds for parents).",
+          "Output lacks actionability (missing owners/due times, unquantified grocery list, vague timelines, absent comms templates).",
+          "Fails to maintain toggles and follow-ups (SMS updates not enabled; reminders not set; advisor slot not offered; charts not pre-staged by Thu 10:00 AM).",
+          "Does not respect kitchen usability constraint leading to weekend disruption (weekend disconnects or dust control not arranged).",
+          "Neglects ACH timing or weekend DCA logic, causing failed or delayed investment execution."
+        ]
+      }
+    }
+  ]
+}

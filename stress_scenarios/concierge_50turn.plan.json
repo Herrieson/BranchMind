@@ -1,0 +1,314 @@
+{
+  "scenario": {
+    "scenario_id": "S-STRESS-CE-001",
+    "title": "Concierge Extreme: Multi-Thread Life Orchestration",
+    "background": "A high-pressure week where a busy professional offloads a large volume of personal and work tasks to an AI concierge. Deadlines, appointments, and logistics collide across many domains, requiring rapid topic switching and careful planning. The user expects proactive conflict detection and cross-topic synthesis.",
+    "user_profile": "Alex Rivera, 34, Boston-based product manager with a tendency to issue rapid-fire, terse instructions. Pragmatic, time-constrained, expects the assistant to remember prior commitments, track budgets, and coordinate across topics without losing context.",
+    "assistant_profile": "An AI concierge with a branching controller that maintains distinct threads, references prior decisions, flags conflicts, and proposes merges/splits explicitly. Produces concise checklists, schedules, and decision frameworks; asks targeted clarifying questions; re-plans quickly on disruptions.",
+    "threads": [
+      {
+        "thread_id": "T-fitness",
+        "intent": "Design and execute a 12-week fitness plan aligned with work and social schedule",
+        "priority": "medium",
+        "key_entities": [
+          "Gym: Downtown Fitness ($69/mo)",
+          "Trainer: Sam (availability M/W/F 6:30–7:30 AM)",
+          "Target: 3x strength + 2x HIIT per week",
+          "Nutrition: 2,000 kcal/day; meal prep Sun",
+          "Equipment: adjustable dumbbells at home"
+        ]
+      },
+      {
+        "thread_id": "T-investment",
+        "intent": "Rebalance portfolio and set DCA plan with tax-loss harvesting options",
+        "priority": "medium",
+        "key_entities": [
+          "Brokerage: Fidelity",
+          "Holdings: VTI, VXUS, BND, TSLA",
+          "Risk: moderate (70/20/10)",
+          "DCA: $1,000/mo on 25th",
+          "Advisor: virtual meeting target Oct 22"
+        ]
+      },
+      {
+        "thread_id": "T-renovation",
+        "intent": "Coordinate kitchen remodel timeline, selections, and deliveries within budget",
+        "priority": "high",
+        "key_entities": [
+          "Contractor: Northstar Renovations (PM: Jenna)",
+          "Budget: $25,000 (10% contingency)",
+          "Demo window: Oct 28–30",
+          "Tile selection due: Oct 21 EOD",
+          "Appliance deliveries: Nov 3–7"
+        ]
+      },
+      {
+        "thread_id": "T-parents",
+        "intent": "Schedule and manage parents’ medical checkups and transportation",
+        "priority": "high",
+        "key_entities": [
+          "Parents: Lina & Raj (live 1 hr away)",
+          "Cardiology: Boston Heart Clinic (Dr. Kim) Oct 24 10:00 AM",
+          "PCP: Riverside Family Medicine (Dr. Patel) Oct 25 1:30 PM",
+          "Insurance forms and med list prep",
+          "Transport: pick-up/drop-off times"
+        ]
+      },
+      {
+        "thread_id": "T-workA",
+        "intent": "Deliver Product Launch (Nimbus v2) milestones on time",
+        "priority": "high",
+        "key_entities": [
+          "Launch date: Nov 12",
+          "Marketing assets due: Oct 21",
+          "Sprint review: Oct 20 3:00 PM",
+          "Stakeholders: Maya (Marketing), Dev Team",
+          "Risk: last-minute copy changes"
+        ]
+      },
+      {
+        "thread_id": "T-workB",
+        "intent": "Prepare quarterly report and board deck",
+        "priority": "high",
+        "key_entities": [
+          "Finance review: Oct 23 2:00 PM",
+          "Board deck draft: Oct 27",
+          "Stakeholders: Evan (CFO), Analytics",
+          "Data pulls: revenue, churn, CAC",
+          "Tooling: Google Slides + Sheets"
+        ]
+      },
+      {
+        "thread_id": "T-language",
+        "intent": "Learn Spanish consistently with live classes and daily practice",
+        "priority": "low",
+        "key_entities": [
+          "Live class: Tue/Thu 7:00–7:45 PM (Tutor: Lucia)",
+          "App: Duolingo + Anki flashcards",
+          "Goal: 30 min/day",
+          "Conversation partner search",
+          "Budget: $150/mo"
+        ]
+      },
+      {
+        "thread_id": "T-dog",
+        "intent": "Maintain dog Milo’s health schedule and care",
+        "priority": "high",
+        "key_entities": [
+          "Dog: Milo, 4-year-old Labrador",
+          "Vet: GreenPaws Clinic; vaccines due Oct 22",
+          "Hip check optional add-on",
+          "Diet: Hill’s Science Diet",
+          "Groomer: next available Oct 26 morning"
+        ]
+      },
+      {
+        "thread_id": "T-weekend",
+        "intent": "Plan weekend social event with minimal conflict and budget adherence",
+        "priority": "medium",
+        "key_entities": [
+          "Dinner party: Sat Oct 26 7–10 PM",
+          "Guests: Sam, Priya, Ben, Chloe, Jordan, Mei, Luis",
+          "Theme: tapas + mocktails",
+          "Budget: $200",
+          "Prep time: 3–4 hours"
+        ]
+      },
+      {
+        "thread_id": "T-car",
+        "intent": "Complete car maintenance and recall with minimal downtime",
+        "priority": "high",
+        "key_entities": [
+          "Car: 2018 Subaru Outback",
+          "Service: Baystate Subaru Oct 21 8:30 AM (loaner requested)",
+          "Tasks: oil change, brake pads, airbag recall",
+          "Budget: $600",
+          "Duration estimate: 4–6 hours"
+        ]
+      },
+      {
+        "thread_id": "T-wedding",
+        "intent": "Advance wedding planning milestones without derailing current week",
+        "priority": "medium",
+        "key_entities": [
+          "Partner: Taylor",
+          "Date: May 10 next year",
+          "Venues: Seaside Loft, Garden Hall, Museum Atrium",
+          "Deposits: Seaside Loft $10k by Nov 1",
+          "Vendor shortlist: photographer, caterer"
+        ]
+      }
+    ]
+  },
+  "generation_plan": {
+    "target_turns": 50,
+    "chunk_size": 12,
+    "global_requirements": [
+      "Assume current week is Oct 20–26, 2025; timezone ET; location Boston, MA.",
+      "Maintain a persistent calendar across threads; detect and surface conflicts proactively.",
+      "Track budgets per thread; propose trade-offs when conflicts arise.",
+      "Use explicit controller operations: MERGE when synthesizing across threads; SPLIT when separating concerns after resolving shared dependencies.",
+      "When unexpected events occur, replan and update all impacted threads; do not lose prior commitments.",
+      "Ask concise clarifying questions only when needed; otherwise proceed with defaults stated here.",
+      "Keep thread IDs stable and referenced across chunks; do not mix thread data.",
+      "For schedules, prefer 30–60 minute blocks and realistic travel buffers (Boston urban traffic).",
+      "If information is missing, make sensible assumptions and note them inline for later confirmation.",
+      "Stakeholder names and times must remain consistent unless explicitly changed by disruptions."
+    ],
+    "chunks": [
+      {
+        "chunk_id": "C1",
+        "start_turn_index": 1,
+        "turn_count": 12,
+        "focus_threads": [
+          "T-workA",
+          "T-car",
+          "T-renovation",
+          "T-parents",
+          "T-dog",
+          "T-investment",
+          "T-weekend",
+          "T-fitness",
+          "T-language",
+          "T-wedding"
+        ],
+        "user_goals": [
+          "Kick off Nimbus v2 tasks and confirm marketing asset deadline; request checklist and timeline.",
+          "Book car service appointment details (loaner confirmation, duration) and ask for contingency plan if parts delay.",
+          "Confirm tile selection decision process and shortlist 3 options by price/style; schedule a 20-min decision block.",
+          "Lock parents’ cardiology and PCP appointments; plan pickup/drop-off windows and paperwork checklist.",
+          "Schedule Milo’s vaccines and ask whether to include hip check; set grooming time if possible.",
+          "Request portfolio rebalance recommendation and DCA setup for 25th.",
+          "Draft dinner party plan (menu, shopping list, prep timeline) within $200.",
+          "Outline 12-week fitness program and this week’s workouts (aligned with work mornings).",
+          "Set Spanish learning routine and confirm Tue/Thu class times for this week.",
+          "Advance wedding venue shortlist and note deposit deadlines; ask for 30-min research slot."
+        ],
+        "escalations": [
+          "None major; rapid topic switching to establish branches.",
+          "Minor constraint: keep Monday morning free for car drop-off and sprint review."
+        ],
+        "notes": "Establish all threads quickly with concrete data capture. Encourage the assistant to create separate branches per thread and avoid premature MERGE. The user will bounce rapidly between topics with brief instructions to seed commitments.",
+        "allow_early_termination": false
+      },
+      {
+        "chunk_id": "C2",
+        "start_turn_index": 13,
+        "turn_count": 12,
+        "focus_threads": [
+          "T-fitness",
+          "T-weekend",
+          "T-renovation",
+          "T-parents",
+          "T-workA",
+          "T-workB",
+          "T-investment",
+          "T-dog"
+        ],
+        "user_goals": [
+          "Coordinate fitness and nutrition with tapas menu; request calorie/logistics alignment.",
+          "Check renovation demo timing against the dinner party; propose mitigation (prep elsewhere or adjust schedule).",
+          "Balance parents’ appointments with workA sprint review and workB finance review; build a single-day timeline.",
+          "Request combined calendar view for Mon–Thu integrating car service, work, and dog vet.",
+          "Ask for a board deck outline and a data pull checklist.",
+          "Confirm DCA execution and ask to MERGE investment timing with pay cycle (25th).",
+          "Plan grocery run windows that fit around parents’ appointments and Spanish class.",
+          "Set dog walk schedule that doubles as warm-up for fitness; request MERGE fitness+dod-walks for the week."
+        ],
+        "escalations": [
+          "Force MERGE: T-fitness + T-weekend (nutrition/menu alignment).",
+          "Force MERGE: T-workA + T-workB + T-parents (single-day timeline for Wed/Thu).",
+          "Flag potential conflict: dinner party prep vs. renovation demo window."
+        ],
+        "notes": "Begin cross-topic coordination. The user explicitly instructs the assistant to MERGE specific threads for scheduling and nutritional alignment. Assistant should surface conflicts clearly and propose options.",
+        "allow_early_termination": false
+      },
+      {
+        "chunk_id": "C3",
+        "start_turn_index": 25,
+        "turn_count": 12,
+        "focus_threads": [
+          "T-car",
+          "T-dog",
+          "T-parents",
+          "T-workA",
+          "T-workB",
+          "T-renovation",
+          "T-weekend",
+          "T-wedding"
+        ],
+        "user_goals": [
+          "Handle a car recall parts delay and rebook time; update Monday plan.",
+          "Address Milo’s sudden vomiting; add urgent vet consult and adjust vaccine timing.",
+          "React to cardiology moving to 11:30 AM; rebuild transport schedule.",
+          "Move a finance review to 3:30 PM due to travel; update timelines and notify stakeholders.",
+          "Ask for SPLIT: separate wedding planning from this week after noting deposit urgency.",
+          "Request a renovation update: contractor proposes moving demo to Oct 27; evaluate pros/cons.",
+          "Handle flight delay for a quick NYC client meeting (same-day) impacting workA tasks; re-sequence deliverables.",
+          "Protect dinner party plan with contingency (backup venue or caterer) due to possible kitchen access limits."
+        ],
+        "escalations": [
+          "Disruption: Car recall part unavailable; service rescheduled to Oct 22 8:30 AM.",
+          "Disruption: Dog illness; urgent vet slot Oct 21 4:30 PM added; vaccines moved to Oct 23.",
+          "Disruption: Cardiology pushes to 11:30 AM; increases overlap with lunch and transport.",
+          "Disruption: WorkB finance review slides; meeting moved to 3:30 PM.",
+          "Disruption: Flight delay for NYC day trip; arrival 90 minutes late.",
+          "Force SPLIT: T-wedding from active week tasks (track deposits separately)."
+        ],
+        "notes": "Introduce multiple unexpected events requiring the assistant to replan aggressively. The user explicitly instructs MERGE/SPLIT where appropriate. Assistant must update calendars, notify stakeholders, and present alternative options with trade-offs.",
+        "allow_early_termination": false
+      },
+      {
+        "chunk_id": "C4",
+        "start_turn_index": 37,
+        "turn_count": 12,
+        "focus_threads": [
+          "T-workA",
+          "T-workB",
+          "T-parents",
+          "T-dog",
+          "T-weekend",
+          "T-fitness",
+          "T-renovation",
+          "T-investment"
+        ],
+        "user_goals": [
+          "Create a weekly plan aligning work milestones, parents’ appointments, and dog care with buffers.",
+          "Synthesize a single budget view for renovation, car, dinner party, and investments; propose adjustments.",
+          "Generate a communication plan to stakeholders (Maya, Evan, Jenna, parents) summarizing changes.",
+          "Integrate fitness plan around revised schedule; confirm minimum viable workouts this week.",
+          "Finalize dinner party logistics and grocery list with times; include backup kitchen plan.",
+          "Confirm vaccine reschedule and dog medication; add follow-up check.",
+          "Deliver a draft launch checklist and board deck outline ready for review.",
+          "Confirm DCA execution on 25th and add note to move funds if needed."
+        ],
+        "escalations": [
+          "Force MERGE: Multi-thread synthesis across T-workA, T-workB, T-parents, T-dog for a unified weekly calendar.",
+          "Budget tension: Potential overrun due to brake pads; propose reallocation (reduce dinner budget or delay a purchase)."
+        ],
+        "notes": "Perform comprehensive synthesis. Assistant should MERGE multiple threads into one coherent weekly plan and a consolidated budget, then output actionable checklists and communication drafts.",
+        "allow_early_termination": false
+      },
+      {
+        "chunk_id": "C5",
+        "start_turn_index": 49,
+        "turn_count": 2,
+        "focus_threads": [
+          "T-workA",
+          "T-weekend",
+          "T-parents",
+          "T-car"
+        ],
+        "user_goals": [
+          "Final confirmation of the integrated schedule and stakeholder notifications.",
+          "Lock-in any pending decisions (tile selection, dinner backup, car service loaner)."
+        ],
+        "escalations": [
+          "None; wrap-up and commitment check."
+        ],
+        "notes": "Short closing chunk to confirm commitments, capture any last-minute adjustments, and ensure the assistant references prior merges and disruptions correctly.",
+        "allow_early_termination": false
+      }
+    ]
+  }
+}
