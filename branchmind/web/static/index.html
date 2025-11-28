@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>BranchMind 多分支对话</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>BranchMind 多分支对话实验界面</h1>
+        <p>左侧操作树状上下文，右侧查看节点详情并协调与模型的对话。</p>
+      </header>
+      <main>
+        <section id="tree-panel">
+          <div class="panel-header">
+            <span>上下文树</span>
+            <span id="status-indicator">加载中...</span>
+          </div>
+          <div id="tree-container"></div>
+          <div class="input-bar">
+            <textarea
+              id="question-input"
+              placeholder="在当前选中节点下新增一个用户问题..."
+            ></textarea>
+            <div class="input-actions">
+              <button id="add-node-btn">新增节点</button>
+              <button id="chat-btn">向模型提问</button>
+            </div>
+          </div>
+        </section>
+        <section id="detail-panel">
+          <div class="panel-header">
+            <span>节点详情</span>
+          </div>
+          <div id="node-details">
+            <p>请选择左侧树中的任意节点，查看对应的上下文与回复。</p>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
+
